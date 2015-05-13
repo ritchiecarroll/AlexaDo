@@ -18,6 +18,7 @@ using System.Drawing;
 using System.Linq;
 using System.Speech.Synthesis;
 using System.Windows.Forms;
+using GSF;
 using GSF.Configuration;
 
 namespace AlexaDo
@@ -33,6 +34,8 @@ namespace AlexaDo
         private bool m_initialDisplay;
         private Size m_initialSize;
         private Point m_initialLocation;
+        private int m_processAttempts;
+        private Ticks m_lastProcessAttemptTime;
 
         /// <summary>
         /// Creates a new <see cref="EchoMonitor"/> form instance.
@@ -79,6 +82,37 @@ namespace AlexaDo
                 ShowNotification(string.Format("{0} still running in task bar...", NotifyIcon.Tag), ToolTipIcon.Info, forceDisplay: true);
 
             Hide();
+        }
+
+        internal void TryProcessActivities()
+        {
+            if ((object)m_activityProcessor == null)
+                return;
+
+            // To allow calls to this function from other threads, queue call for message loop processing
+            if (InvokeRequired)
+            {
+                BeginInvoke((Action)TryProcessActivities);
+                return;
+            }
+
+            // If did not process activities, retry authentication
+            if (m_activityProcessor.ProcessActivities())
+            {
+                m_processAttempts = 0;
+                m_lastProcessAttemptTime = DateTime.UtcNow.Ticks;
+            }
+            else
+            {
+                m_processAttempts++;
+
+                // If processing attempts keep failing, retry authentication
+                if (m_processAttempts > 4 && (DateTime.UtcNow.Ticks - m_lastProcessAttemptTime).ToSeconds() > 10.0D)
+                    Reauthenticate(false);
+            }
+
+            NotifyIcon.Text = string.Format("{0} - {1}", NotifyIcon.Tag, Settings.Authenticated ?
+                string.Format("Authenticated, {0:N0} queries", m_activityProcessor.TotalQueries) : "Not Authenticated");
         }
 
         private void Browser_Load(object sender, EventArgs e)
@@ -174,15 +208,7 @@ namespace AlexaDo
 
         private void QueryTimer_Tick(object sender, EventArgs e)
         {
-            if ((object)m_activityProcessor == null)
-                return;
-
-            // If did not process activities, retry authentication
-            if (!m_activityProcessor.ProcessActivities())
-                Reauthenticate(false);
-
-            NotifyIcon.Text = string.Format("{0} - {1}", NotifyIcon.Tag, Settings.Authenticated ?
-                string.Format("Authenticated, {0:N0} queries", m_activityProcessor.TotalQueries) : "Not Authenticated");
+            TryProcessActivities();
         }
 
         private void NotifyIcon_MouseClick(object sender, MouseEventArgs e)

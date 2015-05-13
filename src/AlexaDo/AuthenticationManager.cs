@@ -13,13 +13,39 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
 using GSF;
 using GSF.Configuration;
+using GSF.Threading;
 
 namespace AlexaDo
 {
+    /// <summary>
+    /// Defines a simple COM based interface to accept call backs from JavaScript on WebBrowser
+    /// </summary>
+    [ComVisible(true)]
+    public class ScriptInterface
+    {
+        /// <summary>
+        /// Event raised when new Echo Activity has been received.
+        /// </summary>
+        public event EventHandler ReceivedEchoActivity;
+
+        /// <summary>
+        /// JavaScript call back function for received Echo activities.
+        /// </summary>
+        public void EchoActivityCallback()
+        {
+            Debug.WriteLine("Activity call back received at {0:yyyy-MM-dd HH:mm:ss.000}", DateTime.UtcNow);
+
+            if ((object)ReceivedEchoActivity != null)
+                ReceivedEchoActivity(this, EventArgs.Empty);
+        }
+    }
+
     /// <summary>
     /// Provides Amazon Echo authentication handling.
     /// </summary>
@@ -34,6 +60,7 @@ namespace AlexaDo
 
         // Fields
         private readonly EchoMonitor m_echoMonitor;
+        private readonly ShortSynchronizedOperation m_processActivites;
         private readonly CategorizedSettingsElementCollection m_userSettings;
         private SHDocVw.WebBrowser m_activeXReference;
         private Dictionary<string, string> m_lastPostData;
@@ -51,12 +78,18 @@ namespace AlexaDo
         public AuthenticationManager(EchoMonitor echoMonitor)
         {
             m_echoMonitor = echoMonitor;
+            m_processActivites = new ShortSynchronizedOperation(m_echoMonitor.TryProcessActivities);
             m_lastPostData = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             // Make sure default user settings exist
             m_userSettings = ConfigurationFile.Current.Settings["user"];
             m_userSettings.Add("UserName", "", "User name to use when authenticating", true, SettingScope.User);
             m_userSettings.Add("Password", "", "Password to use when authenticating", true, SettingScope.User);
+
+            // Create a new script interface to detect new Echo activities
+            ScriptInterface scriptInterface = new ScriptInterface();
+            scriptInterface.ReceivedEchoActivity += scriptInterface_ReceivedEchoActivity;
+            m_echoMonitor.BrowserControl.ObjectForScripting = scriptInterface;
 
             // Attach to needed events
             m_echoMonitor.FormClosing += m_echoMonitor_FormClosing;
@@ -237,9 +270,63 @@ namespace AlexaDo
                     Settings.Authenticated = true;
                     m_echoMonitor.HideWindow();
                     m_echoMonitor.ShowNotification("Successfully authenticated with Amazon Echo, starting activity monitoring cycle...", ToolTipIcon.Info);
+
+                    // Attempt to piggy-back Amazon Websockets for dynamic response (see: http://www.piettes.com/echo/viewtopic.php?f=3&t=10), we do this
+                    // by replacing page body with script to attach to Echo communications stack.
+                    if (doc.Body != null)
+                    {
+                        doc.Body.InnerHtml =
+                            "<h1>Monitoring Echo Activity...</h1>\r\n" +
+                            "<div id=\"echochamber\" style=\"position: fixed; top:50%; left: 50%; transform: translate(-50%, -50%);\">\r\n" +
+                            "   <h1 class=\"command\">Waiting for you to interact with Alexa...</h1><br />\r\n" +
+                            "   <div class=\"output\" style=\"max-width: 50%; font-size: 10px; font-family: monospace\" />\r\n" +
+                            "</div>\r\n" +
+                            "<div id=\"echochamber_note\" style=\"position: fixed; bottom:50px; left: 50%; transform: translate(-50%, -50%);\">\r\n" +
+                            "  <em>Commands you say that trigger a card to be created will show up here... Try \"tell me a joke\".</em>\r\n" +
+                            "</div>\r\n" +
+                            "<script type=\"text/javascript\">" +
+                            "function startMonitor() {" +
+                            "   $('body').css('display', 'none');\r\n" +
+                            "   // on card create notification, fetch card details and display\r\n" +
+                            "   var onPushActivity = function(c) {\r\n" +
+                            "       // resets\r\n" +
+                            "       $('html').css('background-color', 'red');\r\n" +
+                            "       $('#echochamber h1, #echochamber .output').text(\"\");\r\n\r\n" +
+                            "       var b = c.key.registeredUserId + \"#\" + c.key.entryId;\r\n" +
+                            "       var url = 'https://pitangui.amazon.com/api/activities/'+ encodeURIComponent(b);\r\n" +
+                            "       $.get(url, function(data){\r\n" +
+                            "           if (data.activity) {\r\n" +
+                            "               // trigger .NET call-back\r\n" +
+                            "               window.external.EchoActivityCallback();\r\n\r\n" +
+                            "               // Parse JSON response for display\r\n" +
+                            "               var command;\r\n" +
+                            "               if (data.activity.description) {\r\n" +
+                            "                   command = JSON.parse(data.activity.description).summary;\r\n" +
+                            "               }\r\n" +
+                            "               // show output\r\n" +
+                            "               $('#echochamber h1').text(command);\r\n" +
+                            "               $('#echochamber .output').text(JSON.stringify(data.activity, undefined, 2));\r\n" +
+                            "           }\r\n" +
+                            "           $('html').css('background-color', 'green');\r\n" +
+                            "       });\r\n" +
+                            "   };\r\n\r\n" +
+                            "   // attach to the card creation listener\r\n" +
+                            "   var e = require(\"collections/cardstream/card-collection\").getInstance();\r\n" +
+                            "   e.listenTo(e, \"pushMessage\", function(c){\r\n" +
+                            "       onPushActivity(c);\r\n" +
+                            "   });\r\n" +
+                            "   return true;\r\n" +
+                            "}" +
+                            "</script>";
+
+                        // TODO: Debug this, validate that script is actually running
+                        object response = doc.InvokeScript("startMonitor");
+                        Debug.WriteLine("function startMonitor() response = {0}", response);
+                    }
                 }
                 else
                 {
+                    // TODO: This will keep trying forever if user's Amazon password has changed and cached credentials keep failing - may also lock user out, not nice - count failure attempts and after a short threshold, clear credentials and make user re-authenticate
                     if (!manualLogin)
                         m_echoMonitor.ShowNotification(string.Format("Failed to authenticate, trying again in {0:N0} seconds.", m_echoMonitor.QueryTimer.Interval / 1000), ToolTipIcon.Warning);
                 }
@@ -321,6 +408,14 @@ namespace AlexaDo
             {
                 m_echoMonitor.ShowNotification(string.Format("Failed to clear cached user credentials: {0}", ex.Message), ToolTipIcon.Error);
             }
+        }
+
+        private void scriptInterface_ReceivedEchoActivity(object sender, EventArgs e)
+        {
+            // May get multiple activity notifications in quick succession, so only invoke operation once,
+            // subsequent calls will be marked as pending and one extra call will be made upon primary
+            // call completion to make sure no activities miss processing
+            m_processActivites.RunOnce();
         }
 
         private void m_echoMonitor_FormClosing(object sender, FormClosingEventArgs e)
