@@ -52,7 +52,7 @@
     <CodeAnalysisRuleSet>AlexaDo.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>AlexaEcho.ico</ApplicationIcon>
+    <ApplicationIcon>AlexaDo.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="GSF.Core, Version=2.0.239.0, Culture=neutral, processorArchitecture=MSIL">
@@ -115,7 +115,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="AlexaEcho.ico" />
+    <Content Include="AlexaDo.ico" />
     <Content Include="CommandActions.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
