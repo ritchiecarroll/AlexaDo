@@ -13,6 +13,7 @@
 
 using System;
 using System.Windows.Forms;
+using log4net.Config;
 
 namespace AlexaDo
 {
@@ -24,6 +25,9 @@ namespace AlexaDo
         [STAThread]
         static void Main()
         {
+            // Initialize log4net.
+            XmlConfigurator.Configure();
+            
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new EchoMonitor());

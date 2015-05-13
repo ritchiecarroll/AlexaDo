@@ -20,6 +20,7 @@ using System.Speech.Synthesis;
 using System.Windows.Forms;
 using GSF;
 using GSF.Configuration;
+using log4net;
 
 namespace AlexaDo
 {
@@ -54,6 +55,19 @@ namespace AlexaDo
                 NotifyIcon.ShowBalloonTip(timeout);
 
             UpdateStatus(string.Format("{0}{1}", icon == ToolTipIcon.None ? "" : string.Format("{0}: ", icon), message));
+
+            switch (icon)
+            {
+                case ToolTipIcon.Warning:
+                    Log.Warn(message);
+                    break;
+                case ToolTipIcon.Error:
+                    Log.Error(message);
+                    break;
+                default:
+                    Log.Info(message);
+                    break;
+            }
         }
 
         internal void UpdateStatus(string message, params object[] args)
@@ -315,5 +329,10 @@ namespace AlexaDo
             if (!handled)
                 base.WndProc(ref m);
         }
+
+        /// <summary>
+        /// log4net log writer.
+        /// </summary>
+        internal static readonly ILog Log = LogManager.GetLogger(typeof(EchoMonitor));
     }
 }
