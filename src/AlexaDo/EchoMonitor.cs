@@ -17,40 +17,68 @@ using System.Configuration;
 using System.Drawing;
 using System.Linq;
 using System.Speech.Synthesis;
-using System.Text;
 using System.Windows.Forms;
-using GSF;
 using GSF.Configuration;
 
 namespace AlexaDo
 {
+    /// <summary>
+    /// EchoMonitor provides a base WebBrowser control and manages any TTS voice selections.
+    /// </summary>
     public partial class EchoMonitor : Form
     {
-        private const string DefaultUserAgent = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36";
-        private const string DefaultKeyWord = "Simon Says";
-        private const string BaseURL = "https://pitangui.amazon.com";
-        private const string ActivitiesAPI = "/api/activities?startTime=&endTime=&size=5&offset=-1";
-
-        private SHDocVw.WebBrowser m_browserReference;
-        private Dictionary<string, string> m_lastPostData;
-        private readonly CategorizedSettingsElementCollection m_systemSettings;
-        private readonly CategorizedSettingsElementCollection m_userSettings;
-        private string m_userAgent;
-        private double m_timeTolerance;
-        private string m_keyWord;
-        private bool m_navigationComplete;
-        private bool m_ttsFeedbackEnabled;
+        private AuthenticationManager m_authenticationManager;
+        private ActivityProcessor m_activityProcessor;
+        private CategorizedSettingsElementCollection m_userSettings;
         private bool m_initialDisplay;
         private Size m_initialSize;
         private Point m_initialLocation;
 
+        /// <summary>
+        /// Creates a new <see cref="EchoMonitor"/> form instance.
+        /// </summary>
         public EchoMonitor()
         {
             InitializeComponent();
+        }
 
-            m_lastPostData = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            m_systemSettings = ConfigurationFile.Current.Settings["system"];
-            m_userSettings = ConfigurationFile.Current.Settings["user"];
+        internal void ShowNotification(string message, ToolTipIcon icon = ToolTipIcon.None, int timeout = 1500, bool forceDisplay = false)
+        {
+            NotifyIcon.BalloonTipText = message;
+            NotifyIcon.BalloonTipIcon = icon;
+
+            if (!Visible || forceDisplay)
+                NotifyIcon.ShowBalloonTip(timeout);
+
+            UpdateStatus(string.Format("{0}{1}", icon == ToolTipIcon.None ? "" : string.Format("{0}: ", icon), message));
+        }
+
+        internal void UpdateStatus(string message, params object[] args)
+        {
+            StatusLabel.Text = string.Format("[{0:F}] {1}", DateTime.Now, string.Format(message, args));
+        }
+
+        internal void ShowWindow()
+        {
+            Show();
+            WindowState = FormWindowState.Normal;
+
+            if (m_initialDisplay)
+            {
+                m_initialDisplay = false;
+                Size = m_initialSize;
+                Location = m_initialLocation;
+            }
+
+            Activate();
+        }
+
+        internal void HideWindow(bool notify = false)
+        {
+            if (notify)
+                ShowNotification(string.Format("{0} still running in task bar...", NotifyIcon.Tag), ToolTipIcon.Info, forceDisplay: true);
+
+            Hide();
         }
 
         private void Browser_Load(object sender, EventArgs e)
@@ -61,23 +89,9 @@ namespace AlexaDo
             foreach (string voice in TTSEngine.VoiceNames)
                 VoiceDropDown.DropDownItems.Add(voice);
 
-            // Make sure default settings exist
-            m_systemSettings.Add("UserAgent", "", "Browser User-Agent to use when authenticating", false, SettingScope.Application);
-            m_systemSettings.Add("TTSSpeed", "0", "Speech rate to use for TTS engine (-10 to 10)", false, SettingScope.Application);
-            m_systemSettings.Add("QueryInterval", "3", "Echo activity query interval, in seconds (integer)", false, SettingScope.Application);
-            m_systemSettings.Add("TimeTolerance", "30.0", "Echo activity time processing tolerance, in seconds (floating-point)", false, SettingScope.Application);
-            m_systemSettings.Add("KeyWord", "", "Key word for commands, defaults to Simon Says", false, SettingScope.Application);
-
-            m_userSettings.Add("UserName", "", "User name to use when authenticating", true, SettingScope.User);
-            m_userSettings.Add("Password", "", "Password to use when authenticating", true, SettingScope.User);
+            // Make sure default user settings exist
+            m_userSettings = ConfigurationFile.Current.Settings["user"];
             m_userSettings.Add("TTSVoice", "", "Selected text-to-speech voice", false, SettingScope.User);
-
-            // Apply current settings
-            m_userAgent = m_systemSettings["UserAgent"].Value.ToNonNullNorWhiteSpace(DefaultUserAgent);
-            TTSEngine.SetRate(m_systemSettings["TTSSpeed"].ValueAs(0));
-            QueryTimer.Interval = m_systemSettings["QueryInterval"].ValueAs(3) * 1000;
-            m_timeTolerance = m_systemSettings["TimeTolerance"].ValueAs(30.0);
-            m_keyWord = m_systemSettings["KeyWord"].Value.ToNonNullNorWhiteSpace(DefaultKeyWord);
 
             // Restore last selected voice
             SelectVoice(m_userSettings["TTSVoice"].ValueAs(""));
@@ -91,25 +105,24 @@ namespace AlexaDo
 
         private void Browser_Shown(object sender, EventArgs e)
         {
-            try
-            {
-                m_browserReference = (SHDocVw.WebBrowser)BrowserControl.ActiveXInstance;
-                m_browserReference.BeforeNavigate2 += BrowserControl_BeforeNavigate2;
-            }
-            catch
-            {
-                // Any possible failure here would not be fatal to operation
-            }
-
             HideWindow();
-            Authenticate();
+
+            if ((object)m_activityProcessor == null)
+                m_activityProcessor = new ActivityProcessor(this);
+
+            if ((object)m_authenticationManager == null)
+                m_authenticationManager = new AuthenticationManager(this);
+
+            m_authenticationManager.Authenticate();
         }
 
         private void Browser_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (e.CloseReason != CloseReason.UserClosing)
             {
-                m_navigationComplete = true;
+                if ((object)m_authenticationManager != null)
+                    m_authenticationManager.Dispose();
+
                 return;
             }
 
@@ -135,24 +148,6 @@ namespace AlexaDo
         private void BrowserControl_DocumentCompleted(object sender, WebBrowserDocumentCompletedEventArgs e)
         {
             URLFeedbackLabel.Text = string.Format("Loaded {0}.", e.Url);
-            m_navigationComplete = true;
-        }
-
-        private void BrowserControl_BeforeNavigate2(object pDisp, ref object URL, ref object Flags, ref object TargetFrameName, ref object PostData, ref object Headers, ref bool Cancel)
-        {
-            try
-            {
-                byte[] data = PostData as byte[];
-
-                if ((object)data != null && data.Length > 0)
-                    m_lastPostData = Encoding.UTF8.GetString(data).ParseKeyValuePairs('&');
-            }
-            catch
-            {
-                // Need post data to cache user credentials between runs, if this fails it's not the end of the world,
-                // it just means the user will need to login each time the application runs
-                m_lastPostData.Clear();
-            }
         }
 
         private void ShowMenuItem_Click(object sender, EventArgs e)
@@ -172,7 +167,6 @@ namespace AlexaDo
 
         private void ExitMenuItem_Click(object sender, EventArgs e)
         {
-            m_navigationComplete = true;
             QueryTimer.Enabled = false;
             ConfigurationFile.Current.Save(ConfigurationSaveMode.Full);
             Application.Exit();
@@ -180,12 +174,15 @@ namespace AlexaDo
 
         private void QueryTimer_Tick(object sender, EventArgs e)
         {
+            if ((object)m_activityProcessor == null)
+                return;
+
             // If did not process activities, retry authentication
-            if (!ProcessActivities())
+            if (!m_activityProcessor.ProcessActivities())
                 Reauthenticate(false);
 
-            NotifyIcon.Text = string.Format("{0} - {1}", NotifyIcon.Tag, m_authenticated ?
-                string.Format("Authenticated, {0:N0} queries", m_totalQueries) : "Not Authenticated");
+            NotifyIcon.Text = string.Format("{0} - {1}", NotifyIcon.Tag, Settings.Authenticated ?
+                string.Format("Authenticated, {0:N0} queries", m_activityProcessor.TotalQueries) : "Not Authenticated");
         }
 
         private void NotifyIcon_MouseClick(object sender, MouseEventArgs e)
@@ -209,28 +206,12 @@ namespace AlexaDo
             SelectVoice(e.ClickedItem.Text);
         }
 
-        private void Navigate(string url, bool scrollToBottom = false)
-        {
-            m_navigationComplete = false;
-            BrowserControl.Navigate(url, null, null, "User-Agent: " + m_userAgent);
-
-            while (!m_navigationComplete)
-                Application.DoEvents();
-
-            if (!scrollToBottom)
-                return;
-
-            // Scroll browser window to bring login screen into full view
-            HtmlDocument doc = BrowserControl.Document;
-
-            if ((object)doc != null && (object)doc.Window != null && (object)doc.Body != null)
-                doc.Window.ScrollTo(0, doc.Body.ScrollRectangle.Height);
-        }
-
         private void Reauthenticate(bool clearCredentials)
         {
             QueryTimer.Enabled = false;
-            Authenticate(clearCredentials);
+
+            if ((object)m_authenticationManager != null)
+                m_authenticationManager.Authenticate(clearCredentials);
         }
 
         private void SelectVoice(string voiceName)
@@ -242,7 +223,7 @@ namespace AlexaDo
 
                 if (voiceName.Equals("None", StringComparison.OrdinalIgnoreCase))
                 {
-                    m_ttsFeedbackEnabled = false;
+                    Settings.TTSFeedbackEnabled = false;
                     VoiceDropDown.Text = "None";
                 }
                 else
@@ -267,61 +248,26 @@ namespace AlexaDo
                         }
                     }
 
-                    m_ttsFeedbackEnabled = true;
+                    Settings.TTSFeedbackEnabled = true;
                     VoiceDropDown.Text = TTSEngine.SelectedVoice;
                 }
             }
             catch (Exception ex)
             {
                 // Fall back on no voice for errors
-                m_ttsFeedbackEnabled = false;
+                Settings.TTSFeedbackEnabled = false;
                 VoiceDropDown.Text = "None";
-                ShowNotifcation(string.Format("Failed to select voice: {0}", ex.Message), ToolTipIcon.Error);
+                ShowNotification(string.Format("Failed to select voice: {0}", ex.Message), ToolTipIcon.Error);
             }
 
             // Save current voice selection
             m_userSettings["TTSVoice"].Value = VoiceDropDown.Text;
         }
 
-        private void ShowNotifcation(string message, ToolTipIcon icon = ToolTipIcon.None, int timeout = 1500, bool forceDisplay = false)
-        {
-            NotifyIcon.BalloonTipText = message;
-            NotifyIcon.BalloonTipIcon = icon;
-
-            if (!Visible || forceDisplay)
-                NotifyIcon.ShowBalloonTip(timeout);
-
-            UpdateStatus(string.Format("{0}{1}", icon == ToolTipIcon.None ? "" : string.Format("{0}: ", icon), message));
-        }
-
-        private void UpdateStatus(string message, params object[] args)
-        {
-            StatusLabel.Text = string.Format("[{0:F}] {1}", DateTime.Now, string.Format(message, args));
-        }
-
-        private void ShowWindow()
-        {
-            Show();
-            WindowState = FormWindowState.Normal;
-
-            if (m_initialDisplay)
-            {
-                m_initialDisplay = false;
-                Size = m_initialSize;
-                Location = m_initialLocation;
-            }
-
-            Activate();
-        }
-
-        private void HideWindow(bool notify = false)
-        {
-            if (notify)
-                ShowNotifcation(string.Format("{0} still running in task bar...", NotifyIcon.Tag), ToolTipIcon.Info, forceDisplay: true);
-
-            Hide();
-        }
-
+        /// <summary>
+        /// Windows Form base class message processing function.
+        /// </summary>
+        /// <param name="m">The Windows <see cref="Message"/> to process.</param>
         protected override void WndProc(ref Message m)
         {
             const int WM_SYSCOMMAND = 0x0112;

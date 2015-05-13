@@ -46,6 +46,7 @@ namespace AlexaDo
             this.BrowserControl = new System.Windows.Forms.WebBrowser();
             this.URLFeebackStrip = new System.Windows.Forms.StatusStrip();
             this.URLFeedbackLabel = new System.Windows.Forms.ToolStripStatusLabel();
+            this.TTSVoiceLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.VoiceDropDown = new System.Windows.Forms.ToolStripDropDownButton();
             this.URLLoadingProgress = new System.Windows.Forms.ToolStripProgressBar();
             this.QueryTimer = new System.Windows.Forms.Timer(this.components);
@@ -70,7 +71,7 @@ namespace AlexaDo
             this.BrowserControl.Location = new System.Drawing.Point(0, 22);
             this.BrowserControl.MinimumSize = new System.Drawing.Size(20, 20);
             this.BrowserControl.Name = "BrowserControl";
-            this.BrowserControl.Size = new System.Drawing.Size(784, 517);
+            this.BrowserControl.Size = new System.Drawing.Size(784, 515);
             this.BrowserControl.TabIndex = 0;
             this.BrowserControl.DocumentCompleted += new System.Windows.Forms.WebBrowserDocumentCompletedEventHandler(this.BrowserControl_DocumentCompleted);
             this.BrowserControl.Navigating += new System.Windows.Forms.WebBrowserNavigatingEventHandler(this.BrowserControl_Navigating);
@@ -81,20 +82,30 @@ namespace AlexaDo
             this.URLFeebackStrip.GripStyle = System.Windows.Forms.ToolStripGripStyle.Visible;
             this.URLFeebackStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.URLFeedbackLabel,
+            this.TTSVoiceLabel,
             this.VoiceDropDown,
             this.URLLoadingProgress});
-            this.URLFeebackStrip.Location = new System.Drawing.Point(0, 539);
+            this.URLFeebackStrip.Location = new System.Drawing.Point(0, 537);
             this.URLFeebackStrip.Name = "URLFeebackStrip";
-            this.URLFeebackStrip.Size = new System.Drawing.Size(784, 22);
+            this.URLFeebackStrip.Size = new System.Drawing.Size(784, 24);
             this.URLFeebackStrip.TabIndex = 1;
             // 
             // URLFeedbackLabel
             // 
+            this.URLFeedbackLabel.AutoToolTip = true;
             this.URLFeedbackLabel.Name = "URLFeedbackLabel";
-            this.URLFeedbackLabel.Size = new System.Drawing.Size(654, 17);
+            this.URLFeedbackLabel.Size = new System.Drawing.Size(588, 19);
             this.URLFeedbackLabel.Spring = true;
             this.URLFeedbackLabel.Text = "URL Feeback";
             this.URLFeedbackLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // TTSVoiceLabel
+            // 
+            this.TTSVoiceLabel.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Left;
+            this.TTSVoiceLabel.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.TTSVoiceLabel.Name = "TTSVoiceLabel";
+            this.TTSVoiceLabel.Size = new System.Drawing.Size(66, 19);
+            this.TTSVoiceLabel.Text = "TTS Voice:";
             // 
             // VoiceDropDown
             // 
@@ -102,13 +113,13 @@ namespace AlexaDo
             this.VoiceDropDown.Image = ((System.Drawing.Image)(resources.GetObject("VoiceDropDown.Image")));
             this.VoiceDropDown.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.VoiceDropDown.Name = "VoiceDropDown";
-            this.VoiceDropDown.Size = new System.Drawing.Size(13, 20);
+            this.VoiceDropDown.Size = new System.Drawing.Size(13, 22);
             this.VoiceDropDown.DropDownItemClicked += new System.Windows.Forms.ToolStripItemClickedEventHandler(this.VoiceDropDown_DropDownItemClicked);
             // 
             // URLLoadingProgress
             // 
             this.URLLoadingProgress.Name = "URLLoadingProgress";
-            this.URLLoadingProgress.Size = new System.Drawing.Size(100, 16);
+            this.URLLoadingProgress.Size = new System.Drawing.Size(100, 18);
             // 
             // QueryTimer
             // 
@@ -222,10 +233,8 @@ namespace AlexaDo
 
         #endregion
 
-        private System.Windows.Forms.WebBrowser BrowserControl;
         private System.Windows.Forms.StatusStrip URLFeebackStrip;
         private System.Windows.Forms.ToolStripProgressBar URLLoadingProgress;
-        private System.Windows.Forms.Timer QueryTimer;
         private System.Windows.Forms.ToolStripDropDownButton VoiceDropDown;
         private System.Windows.Forms.ToolStripStatusLabel URLFeedbackLabel;
         private System.Windows.Forms.StatusStrip StatusStrip;
@@ -238,6 +247,9 @@ namespace AlexaDo
         private System.Windows.Forms.ToolStripMenuItem ReauthenticateMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
         private System.Windows.Forms.ToolStripMenuItem ExitMenuItem;
+        private System.Windows.Forms.ToolStripStatusLabel TTSVoiceLabel;
+        internal System.Windows.Forms.Timer QueryTimer;
+        internal System.Windows.Forms.WebBrowser BrowserControl;
     }
 }
 

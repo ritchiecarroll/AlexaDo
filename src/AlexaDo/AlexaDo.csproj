@@ -71,6 +71,9 @@
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ActivityProcessor.cs" />
+    <Compile Include="AuthenticationManager.cs" />
+    <Compile Include="Settings.cs" />
     <Compile Include="EchoMonitor.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -80,12 +83,6 @@
     <EmbeddedResource Include="EchoMonitor.resx">
       <DependentUpon>EchoMonitor.cs</DependentUpon>
     </EmbeddedResource>
-    <Compile Include="EchoMonitor.Authenticate.Designer.cs">
-      <DependentUpon>EchoMonitor.cs</DependentUpon>
-    </Compile>
-    <Compile Include="EchoMonitor.ProcessActivities.Designer.cs">
-      <DependentUpon>EchoMonitor.cs</DependentUpon>
-    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TTSEngine.cs" />

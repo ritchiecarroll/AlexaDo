@@ -1,5 +1,5 @@
 ﻿//******************************************************************************************************
-//  EchoMonitor.ProcessActivities.Designer.cs - Gbtc
+//  ActivityProcessor.cs - Gbtc
 //
 //  Copyright © 2015, James Ritchie Carroll.  All Rights Reserved.
 //  MIT License (MIT)
@@ -17,6 +17,7 @@ using System.IO;
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Windows.Forms;
 using AlexaDoPlugin;
 using GSF;
@@ -26,28 +27,110 @@ using Json;
 
 namespace AlexaDo
 {
-    public partial class EchoMonitor
+    /// <summary>
+    /// Processes Amazon Echo activities as dispatches commands to plug-ins.
+    /// </summary>
+    public class ActivityProcessor : IDisposable
     {
-        [DllImport("wininet.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        static extern bool InternetGetCookie(string lpszUrl, string lpszCookieName, StringBuilder lpszCookieData, ref uint lpdwSize);
+        #region [ Members ]
 
+        // Constants
         private const string ProcessedActivitiesCacheFileName = "ProcessedActivities.cache";
 
+        // Fields
+        private readonly EchoMonitor m_echoMonitor;
         private HashSet<EchoActivity> m_processedActivities;
         private long m_totalQueries;
-        private bool m_processing;
+        private int m_processing;
+        private bool m_disposed;
 
-        private bool ProcessActivities()
+        #endregion
+
+        #region [ Constructors ]
+
+        /// <summary>
+        /// Creates a new <see cref="ActivityProcessor"/> instance.
+        /// </summary>
+        /// <param name="echoMonitor">Parent <see cref="EchoMonitor"/> form used for user feedback processing.</param>
+        public ActivityProcessor(EchoMonitor echoMonitor)
+        {
+            m_echoMonitor = echoMonitor;
+        }
+
+        /// <summary>
+        /// Releases all the resources used by the <see cref="ActivityProcessor"/> object.
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Releases the unmanaged resources used by the <see cref="ActivityProcessor"/> object and optionally releases the managed resources.
+        /// </summary>
+        /// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!m_disposed)
+            {
+                try
+                {
+                    if (disposing)
+                    {
+                        // TODO: Expect to dispose AlexaDo Plugin Manager once developed...
+                    }
+                }
+                finally
+                {
+                    m_disposed = true;  // Prevent duplicate dispose.
+                }
+            }
+        }
+
+        #endregion
+
+        #region [ Properties ]
+
+        /// <summary>
+        /// Total Echo activity queries.
+        /// </summary>
+        public long TotalQueries
+        {
+            get
+            {
+                return m_totalQueries;
+            }
+            set
+            {
+                m_totalQueries = value;
+            }
+        }
+
+        #endregion
+
+        #region [ Methods ]
+
+        /// <summary>
+        /// Processes current activities.
+        /// </summary>
+        /// <returns>Returns <c>true</c> if processing succeeded; otherwise, <c>false</c>.</returns>
+        /// <threading>
+        /// This method is safe to be called from a non-UI thread. Feedback for UI elements is handled
+        /// with a BeginInvoke call to queue activity on main message loop. Function is thread-safe from
+        /// the perspective that only one call will ever be processing a set of activities at once.
+        /// </threading>
+        public bool ProcessActivities()
         {
             // Make sure to only process one activity query at a time, query timer interval set too small?
-            if (m_processing)
+            if (Thread.VolatileRead(ref m_processing) != 0)
                 return false;
 
             try
             {
-                m_processing = true;
+                Interlocked.Exchange(ref m_processing, 1);
 
-                if (m_authenticated)
+                if (Settings.Authenticated)
                 {
                     Ticks startTime = DateTime.UtcNow;
                     UpdateStatus("Downloading Echo activity data...");
@@ -66,10 +149,10 @@ namespace AlexaDo
 
                     // Have to use WebClient to get JSON data, WebBrowser control tries to download it to a file
                     // prompting UI for a file name - may be able to intercept this using ActiveX API, but the
-                    // following seems to work OK:
+                    // following seems to work OK and allows operation on another thread:
                     using (WebClient client = new WebClient())
                     {
-                        const string url = BaseURL + ActivitiesAPI;
+                        const string url = Settings.BaseURL + Settings.ActivitiesAPI;
                         uint datasize = 32768;
 
                         StringBuilder cookieData = new StringBuilder((int)datasize);
@@ -79,7 +162,7 @@ namespace AlexaDo
                             client.Headers.Add(HttpRequestHeader.Cookie, cookieData.ToString());
 
                         // Make sure we look like the same browser that started the session
-                        client.Headers[HttpRequestHeader.UserAgent] = m_userAgent;
+                        client.Headers[HttpRequestHeader.UserAgent] = Settings.UserAgent;
 
                         // Download the JSON Echo Activities data
                         activities = Encoding.UTF8.GetString(client.DownloadData(url));
@@ -120,16 +203,22 @@ namespace AlexaDo
                                 // Only process successful activities that have occurred recently - note that
                                 // if local clock is way off, things may never get processed
                                 if (activity.Status.Equals("SUCCESS", StringComparison.OrdinalIgnoreCase) &&
-                                    Math.Abs((DateTime.UtcNow - activity.Time).TotalSeconds) <= m_timeTolerance)
+                                    Math.Abs((DateTime.UtcNow - activity.Time).TotalSeconds) <= Settings.TimeTolerance)
                                 {
                                     UpdateStatus("Processing Echo activity \"[{0}]: {1}\"", activity.Status, activity.Command);
 
-                                    if (activity.Command.StartsWith(m_keyWord, StringComparison.OrdinalIgnoreCase))
+                                    bool keyWordDetected = Settings.KeyWordStyle == KeyWordStyle.StartsWith ?
+                                        activity.Command.StartsWith(Settings.KeyWord, StringComparison.OrdinalIgnoreCase) :
+                                        activity.Command.EndsWith(Settings.KeyWord, StringComparison.OrdinalIgnoreCase);
+
+                                    if (keyWordDetected)
                                     {
                                         // Remove key word from command
-                                        activity.Command = activity.Command.Substring(m_keyWord.Length);
+                                        activity.Command = Settings.KeyWordStyle == KeyWordStyle.StartsWith ?
+                                            activity.Command.Substring(Settings.KeyWord.Length) :
+                                            activity.Command.Substring(activity.Command.Length - Settings.KeyWord.Length);
 
-                                        if (m_ttsFeedbackEnabled)
+                                        if (Settings.TTSFeedbackEnabled)
                                             TTSEngine.Speak("Processing command: " + activity.Command);
 
                                         // TODO: Process plug-ins
@@ -148,7 +237,7 @@ namespace AlexaDo
                             // If activity no longer appears in JSON list or is beyond time tolerance, mark activity for removal
                             if (!encounteredActivities.Contains(activity))
                                 expiredActivities.Add(activity);
-                            else if (Math.Abs((DateTime.UtcNow - activity.Time).TotalSeconds) > m_timeTolerance * 2)
+                            else if (Math.Abs((DateTime.UtcNow - activity.Time).TotalSeconds) > Settings.TimeTolerance * 2)
                                 expiredActivities.Add(activity);
                         }
 
@@ -173,11 +262,11 @@ namespace AlexaDo
             }
             catch (Exception ex)
             {
-                ShowNotifcation(string.Format("Failure while processing activities: {0}", ex.Message), ToolTipIcon.Error);
+                ShowNotification(string.Format("Failure while processing activities: {0}", ex.Message), ToolTipIcon.Error);
             }
             finally
             {
-                m_processing = false;
+                Interlocked.Exchange(ref m_processing, 0);
             }
 
             return false;
@@ -207,7 +296,7 @@ namespace AlexaDo
             }
             catch (Exception ex)
             {
-                ShowNotifcation(string.Format("Failed to restore processed activities cache: {0}", ex.Message), ToolTipIcon.Error);
+                ShowNotification(string.Format("Failed to restore processed activities cache: {0}", ex.Message), ToolTipIcon.Error);
             }
 
             return new HashSet<EchoActivity>();
@@ -222,8 +311,30 @@ namespace AlexaDo
             }
             catch (Exception ex)
             {
-                ShowNotifcation(string.Format("Failed to persist processed activities cache: {0}", ex.Message), ToolTipIcon.Error);
+                ShowNotification(string.Format("Failed to persist processed activities cache: {0}", ex.Message), ToolTipIcon.Error);
             }
         }
+
+        // Proxy notifications to UI message loop
+        private void ShowNotification(string message, ToolTipIcon icon = ToolTipIcon.None, int timeout = 1500, bool forceDisplay = false)
+        {
+            m_echoMonitor.BeginInvoke((Action<string, ToolTipIcon, int, bool>)m_echoMonitor.ShowNotification, message, icon, timeout, forceDisplay);
+        }
+
+        // Proxy status updates to UI message loop
+        private void UpdateStatus(string message, params object[] args)
+        {
+            m_echoMonitor.BeginInvoke((Action<string, object[]>)m_echoMonitor.UpdateStatus, message, args);
+        }
+
+        #endregion
+
+        #region [ Static ]
+
+        // Static Methods
+        [DllImport("wininet.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        private static extern bool InternetGetCookie(string lpszUrl, string lpszCookieName, StringBuilder lpszCookieData, ref uint lpdwSize);
+
+        #endregion
     }
 }
