@@ -65,6 +65,7 @@ namespace AlexaDo
         private SHDocVw.WebBrowser m_activeXReference;
         private Dictionary<string, string> m_lastPostData;
         private bool m_navigationComplete;
+        private int m_automatedLoginAttempts;
         private bool m_disposed;
 
         #endregion
@@ -229,110 +230,80 @@ namespace AlexaDo
                 // Next action will navigate, reset wait flag
                 m_navigationComplete = false;
 
-                // See if cached user credentials exist
-                if (string.IsNullOrWhiteSpace(userName) || string.IsNullOrWhiteSpace(password))
-                {
-                    // Make sure window is visible, we need user to login
-                    m_echoMonitor.ShowWindow();
-                    m_echoMonitor.ShowNotification("Enter credentials to login to Amazon Echo...", ToolTipIcon.Info, forceDisplay: true);
-                    m_navigationComplete = false;
-                    manualLogin = true;
-                }
-                else
-                {
-                    // Have existing credentials, attempt automated login
-                    AutomatedLogin(doc, userName, password);
-                }
-
                 while (!m_navigationComplete)
-                    Application.DoEvents();
-
-                // Arrival at echo.amazon.com indicates successful authentication
-                if ((object)doc.Url != null && doc.Url.Host.Equals("echo.amazon.com", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (manualLogin)
+                    // See if cached user credentials exist
+                    if (string.IsNullOrWhiteSpace(userName) || string.IsNullOrWhiteSpace(password))
                     {
-                        try
-                        {
-                            // Cache credentials for future logins (will be encrypted)
-                            if (m_lastPostData.TryGetValue("email", out userName))
-                                m_userSettings["UserName"].Value = userName;
-
-                            if (m_lastPostData.TryGetValue("password", out password))
-                                m_userSettings["Password"].Value = password;
-                        }
-                        catch (Exception ex)
-                        {
-                            m_echoMonitor.ShowNotification(string.Format("Failed to cache user credentials: {0}", ex.Message), ToolTipIcon.Error);
-                        }
+                        // Make sure window is visible, we need user to login
+                        m_echoMonitor.ShowWindow();
+                        m_echoMonitor.ShowNotification("Enter credentials to login to Amazon Echo...", ToolTipIcon.Info, forceDisplay: true);
+                        m_navigationComplete = false;
+                        manualLogin = true;
+                    }
+                    else
+                    {
+                        // Have existing credentials, attempt automated login
+                        AutomatedLogin(doc, userName, password);
                     }
 
-                    Settings.Authenticated = true;
-                    m_echoMonitor.HideWindow();
-                    m_echoMonitor.ShowNotification("Successfully authenticated with Amazon Echo, starting activity monitoring cycle...", ToolTipIcon.Info);
+                    while (!m_navigationComplete)
+                        Application.DoEvents();
 
-                    // Attempt to piggy-back Amazon Websockets for dynamic response (see: http://www.piettes.com/echo/viewtopic.php?f=3&t=10), we do this
-                    // by replacing page body with script to attach to Echo communications stack.
-                    if (doc.Body != null)
+                    // Arrival at echo.amazon.com indicates successful authentication
+                    if ((object)doc.Url != null && doc.Url.Host.Equals("echo.amazon.com", StringComparison.OrdinalIgnoreCase))
                     {
-                        doc.Body.InnerHtml =
-                            "<h1>Monitoring Echo Activity...</h1>\r\n" +
-                            "<div id=\"echochamber\" style=\"position: fixed; top:50%; left: 50%; transform: translate(-50%, -50%);\">\r\n" +
-                            "   <h1 class=\"command\">Waiting for you to interact with Alexa...</h1><br />\r\n" +
-                            "   <div class=\"output\" style=\"max-width: 50%; font-size: 10px; font-family: monospace\" />\r\n" +
-                            "</div>\r\n" +
-                            "<div id=\"echochamber_note\" style=\"position: fixed; bottom:50px; left: 50%; transform: translate(-50%, -50%);\">\r\n" +
-                            "  <em>Commands you say that trigger a card to be created will show up here... Try \"tell me a joke\".</em>\r\n" +
-                            "</div>\r\n" +
-                            "<script type=\"text/javascript\">" +
-                            "function startMonitor() {" +
-                            "   $('body').css('display', 'none');\r\n" +
-                            "   // on card create notification, fetch card details and display\r\n" +
-                            "   var onPushActivity = function(c) {\r\n" +
-                            "       // resets\r\n" +
-                            "       $('html').css('background-color', 'red');\r\n" +
-                            "       $('#echochamber h1, #echochamber .output').text(\"\");\r\n\r\n" +
-                            "       var b = c.key.registeredUserId + \"#\" + c.key.entryId;\r\n" +
-                            "       var url = 'https://pitangui.amazon.com/api/activities/'+ encodeURIComponent(b);\r\n" +
-                            "       $.get(url, function(data){\r\n" +
-                            "           if (data.activity) {\r\n" +
-                            "               // trigger .NET call-back\r\n" +
-                            "               window.external.EchoActivityCallback();\r\n\r\n" +
-                            "               // Parse JSON response for display\r\n" +
-                            "               var command;\r\n" +
-                            "               if (data.activity.description) {\r\n" +
-                            "                   command = JSON.parse(data.activity.description).summary;\r\n" +
-                            "               }\r\n" +
-                            "               // show output\r\n" +
-                            "               $('#echochamber h1').text(command);\r\n" +
-                            "               $('#echochamber .output').text(JSON.stringify(data.activity, undefined, 2));\r\n" +
-                            "           }\r\n" +
-                            "           $('html').css('background-color', 'green');\r\n" +
-                            "       });\r\n" +
-                            "   };\r\n\r\n" +
-                            "   // attach to the card creation listener\r\n" +
-                            "   var e = require(\"collections/cardstream/card-collection\").getInstance();\r\n" +
-                            "   e.listenTo(e, \"pushMessage\", function(c){\r\n" +
-                            "       onPushActivity(c);\r\n" +
-                            "   });\r\n" +
-                            "   return true;\r\n" +
-                            "}" +
-                            "</script>";
+                        if (manualLogin)
+                        {
+                            try
+                            {
+                                // Cache credentials for future logins (will be encrypted)
+                                if (m_lastPostData.TryGetValue("email", out userName))
+                                    m_userSettings["UserName"].Value = userName;
 
-                        // TODO: Debug this, validate that script is actually running
-                        object response = doc.InvokeScript("startMonitor");
-                        Debug.WriteLine("function startMonitor() response = {0}", response);
+                                if (m_lastPostData.TryGetValue("password", out password))
+                                    m_userSettings["Password"].Value = password;
+                            }
+                            catch (Exception ex)
+                            {
+                                m_echoMonitor.ShowNotification(string.Format("Failed to cache user credentials: {0}", ex.Message), ToolTipIcon.Error);
+                            }
+                        }
+
+                        Settings.Authenticated = true;
+                        m_automatedLoginAttempts = 0;
+                        m_echoMonitor.HideWindow();
+                        m_echoMonitor.ShowNotification("Successfully authenticated with Amazon Echo, starting activity monitoring cycle...", ToolTipIcon.Info);
+
+                        // Establish dynamic notification if possible, this prevents the need to poll
+                        EstablishWebSocketListener();
+                    }
+                    else
+                    {
+                        if (!manualLogin)
+                        {
+                            // Can't attempt automated login forever, this may lock out user's account
+                            if (m_automatedLoginAttempts < 5)
+                            {
+                                // Retry automated authentication a few times, maybe data connection is not available at the moment
+                                m_echoMonitor.ShowNotification(string.Format("Failed to authenticate, trying again in {0:N0} seconds.", m_echoMonitor.QueryTimer.Interval / 1000), ToolTipIcon.Warning);
+
+                                // Pause 5 seconds between automated authentication attempts
+                                DateTime waitTime = DateTime.UtcNow.AddSeconds(5.0);
+
+                                // We are on the UI thread, maintain message loop processing...
+                                while (DateTime.UtcNow < waitTime)
+                                    Application.DoEvents();
+                            }
+                            else
+                            {
+                                // Clear current credentials and retry authentication - this will make Window pop-up and request user credentials
+                                Authenticate(true);
+                                break;
+                            }
+                        }
                     }
                 }
-                else
-                {
-                    // TODO: This will keep trying forever if user's Amazon password has changed and cached credentials keep failing - may also lock user out, not nice - count failure attempts and after a short threshold, clear credentials and make user re-authenticate
-                    if (!manualLogin)
-                        m_echoMonitor.ShowNotification(string.Format("Failed to authenticate, trying again in {0:N0} seconds.", m_echoMonitor.QueryTimer.Interval / 1000), ToolTipIcon.Warning);
-                }
-
-                // Start timer to begin activity query - or - retry automated authentication, maybe data connection is not available
-                m_echoMonitor.QueryTimer.Enabled = Settings.Authenticated || !manualLogin;
             }
             catch (Exception ex)
             {
@@ -340,8 +311,77 @@ namespace AlexaDo
             }
         }
 
+        // Attempt to piggy-back Amazon Websockets for dynamic response - we do this by replacing page body with script to
+        // attach to Echo communications stack, see: http://www.piettes.com/echo/viewtopic.php?f=3&t=10
+        private void EstablishWebSocketListener()
+        {
+            HtmlDocument doc = m_echoMonitor.BrowserControl.Document;
+
+            // TODO: What to do if user navigates away from this page? Monitor for page change and switch to poll (maybe with a warning) or lock out browser control?
+            // TODO: Maybe want to still use timer to query process activities, although on a longer interval, to make sure user session doesn't expire
+            if ((object)doc != null && (object)doc.Body != null)
+            {
+                doc.Body.InnerHtml =
+                    "<h1>Monitoring Echo Activity...</h1>\r\n" +
+                    "<div id=\"echochamber\" style=\"position: fixed; top:50%; left: 50%; transform: translate(-50%, -50%);\">\r\n" +
+                    "   <h1 class=\"command\">Waiting for you to interact with Alexa...</h1><br />\r\n" +
+                    "   <div class=\"output\" style=\"max-width: 50%; font-size: 10px; font-family: monospace\" />\r\n" +
+                    "</div>\r\n" +
+                    "<div id=\"echochamber_note\" style=\"position: fixed; bottom:50px; left: 50%; transform: translate(-50%, -50%);\">\r\n" +
+                    "  <em>Commands you say that trigger a card to be created will show up here... Try \"tell me a joke\".</em>\r\n" +
+                    "</div>\r\n" +
+                    "<script type=\"text/javascript\">" +
+                    "function startMonitor() {" +
+                    "   $('body').css('display', 'none');\r\n" +
+                    "   // on card create notification, fetch card details and display\r\n" +
+                    "   var onPushActivity = function(c) {\r\n" +
+                    "       // resets\r\n" +
+                    "       $('html').css('background-color', 'red');\r\n" +
+                    "       $('#echochamber h1, #echochamber .output').text(\"\");\r\n\r\n" +
+                    "       var b = c.key.registeredUserId + \"#\" + c.key.entryId;\r\n" +
+                    "       var url = 'https://pitangui.amazon.com/api/activities/'+ encodeURIComponent(b);\r\n" +
+                    "       $.get(url, function(data){\r\n" +
+                    "           if (data.activity) {\r\n" +
+                    "               // trigger .NET call-back\r\n" +
+                    "               window.external.EchoActivityCallback();\r\n\r\n" +
+                    "               // Parse JSON response for display\r\n" +
+                    "               var command;\r\n" +
+                    "               if (data.activity.description) {\r\n" +
+                    "                   command = JSON.parse(data.activity.description).summary;\r\n" +
+                    "               }\r\n" +
+                    "               // show output\r\n" +
+                    "               $('#echochamber h1').text(command);\r\n" +
+                    "               $('#echochamber .output').text(JSON.stringify(data.activity, undefined, 2));\r\n" +
+                    "           }\r\n" +
+                    "           $('html').css('background-color', 'green');\r\n" +
+                    "       });\r\n" +
+                    "   };\r\n\r\n" +
+                    "   // attach to the card creation listener\r\n" +
+                    "   var e = require(\"collections/cardstream/card-collection\").getInstance();\r\n" +
+                    "   e.listenTo(e, \"pushMessage\", function(c){\r\n" +
+                    "       onPushActivity(c);\r\n" +
+                    "   });\r\n" +
+                    "   return true;\r\n" +
+                    "}" +
+                    "</script>";
+
+                // TODO: Debug this, validate that script is actually running
+                object response = doc.InvokeScript("startMonitor");
+                Debug.WriteLine("function startMonitor() response = {0}", response.ToNonNullNorEmptyString("NO RESPONSE!"));
+
+                // If dynamic monitoring is not available, start activity query on a timer
+                if (!response.ToNonNullNorEmptyString("false").ParseBoolean())
+                {
+                    m_echoMonitor.QueryTimer.Enabled = true;
+                    m_echoMonitor.ShowNotification("Using timer based query for activity polling, web socket is unavailable...", ToolTipIcon.Warning);
+                }
+            }
+        }
+
         private void AutomatedLogin(HtmlDocument doc, string userName, string password)
         {
+            m_automatedLoginAttempts++;
+
             HtmlElementCollection forms = doc.GetElementsByTagName("form");
 
             foreach (HtmlElement form in forms)
