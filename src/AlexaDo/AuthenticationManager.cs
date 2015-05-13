@@ -238,7 +238,6 @@ namespace AlexaDo
                         // Make sure window is visible, we need user to login
                         m_echoMonitor.ShowWindow();
                         m_echoMonitor.ShowNotification("Enter credentials to login to Amazon Echo...", ToolTipIcon.Info, forceDisplay: true);
-                        m_navigationComplete = false;
                         manualLogin = true;
                     }
                     else
