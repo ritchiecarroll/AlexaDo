@@ -207,16 +207,15 @@ namespace AlexaDo
                                 {
                                     UpdateStatus("Processing Echo activity \"[{0}]: {1}\"", activity.Status, activity.Command);
 
-                                    bool keyWordDetected = Settings.KeyWordStyle == KeyWordStyle.StartsWith ?
-                                        activity.Command.StartsWith(Settings.KeyWord, StringComparison.OrdinalIgnoreCase) :
-                                        activity.Command.EndsWith(Settings.KeyWord, StringComparison.OrdinalIgnoreCase);
+                                    bool startKeyWordDetected = activity.Command.StartsWith(Settings.StartKeyWord, StringComparison.OrdinalIgnoreCase);
+                                    bool endKeyWordDetected = activity.Command.EndsWith(Settings.EndKeyWord, StringComparison.OrdinalIgnoreCase);
 
-                                    if (keyWordDetected)
+                                    if (startKeyWordDetected || endKeyWordDetected)
                                     {
                                         // Remove key word from command
-                                        activity.Command = Settings.KeyWordStyle == KeyWordStyle.StartsWith ?
-                                            activity.Command.Substring(Settings.KeyWord.Length) :
-                                            activity.Command.Substring(activity.Command.Length - Settings.KeyWord.Length);
+                                        activity.Command = startKeyWordDetected ?
+                                            activity.Command.Substring(Settings.StartKeyWord.Length) :
+                                            activity.Command.Substring(activity.Command.Length - Settings.EndKeyWord.Length);
 
                                         if (Settings.TTSFeedbackEnabled)
                                             TTSEngine.Speak("Processing command: " + activity.Command);
