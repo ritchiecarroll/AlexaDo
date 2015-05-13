@@ -280,6 +280,9 @@ namespace AlexaDo
                     }
                     else
                     {
+                        // Next action will navigate, reset wait flag
+                        m_navigationComplete = false;
+
                         if (!manualLogin)
                         {
                             // Can't attempt automated login forever, this may lock out user's account
