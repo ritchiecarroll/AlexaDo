@@ -25,9 +25,33 @@
     <Compile Include="AlexaDoSetup.wxs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\AlexaDo\AlexaDo.csproj">
+    <ProjectReference Include="..\AlexaDoPlugin\AlexaDoPlugin.csproj">
+      <Name>AlexaDoPlugin</Name>
+      <Project>{86232380-7bc0-42c5-8221-7d412684610e}</Project>
+      <Private>True</Private>
+      <DoNotHarvest>True</DoNotHarvest>
+      <RefProjectOutputGroups>Binaries;Content;Satellites</RefProjectOutputGroups>
+      <RefTargetDir>INSTALLFOLDER</RefTargetDir>
+    </ProjectReference>
+    <ProjectReference Include="..\AlexaDo\AlexaDo.csproj">
       <Name>AlexaDo</Name>
       <Project>{40a55f1a-e891-4d40-8b6f-c71372f19cf8}</Project>
+      <Private>True</Private>
+      <DoNotHarvest>True</DoNotHarvest>
+      <RefProjectOutputGroups>Binaries;Content;Satellites</RefProjectOutputGroups>
+      <RefTargetDir>INSTALLFOLDER</RefTargetDir>
+    </ProjectReference>
+    <ProjectReference Include="..\Plugins\AppLauncher\AppLauncher.csproj">
+      <Name>AppLauncher</Name>
+      <Project>{7570fd13-b883-442d-bd5b-3af6268386c5}</Project>
+      <Private>True</Private>
+      <DoNotHarvest>True</DoNotHarvest>
+      <RefProjectOutputGroups>Binaries;Content;Satellites</RefProjectOutputGroups>
+      <RefTargetDir>INSTALLFOLDER</RefTargetDir>
+    </ProjectReference>
+    <ProjectReference Include="..\Plugins\FrontPointSecurity\FrontPointSecurity.csproj">
+      <Name>FrontPointSecurity</Name>
+      <Project>{4f4dfc8b-bb39-4ed0-badf-478ea8b5a32e}</Project>
       <Private>True</Private>
       <DoNotHarvest>True</DoNotHarvest>
       <RefProjectOutputGroups>Binaries;Content;Satellites</RefProjectOutputGroups>
