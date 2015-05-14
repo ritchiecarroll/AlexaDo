@@ -20,6 +20,7 @@ using System.Windows.Forms;
 using GSF;
 using GSF.Configuration;
 using GSF.Threading;
+using log4net;
 
 namespace AlexaDo
 {
@@ -66,6 +67,7 @@ namespace AlexaDo
         private Dictionary<string, string> m_lastPostData;
         private bool m_navigationComplete;
         private int m_automatedLoginAttempts;
+        private bool m_applicationClosing;
         private bool m_disposed;
 
         #endregion
@@ -164,7 +166,7 @@ namespace AlexaDo
             m_navigationComplete = false;
             m_echoMonitor.BrowserControl.Navigate(url, null, null, "User-Agent: " + Settings.UserAgent);
 
-            while (!m_navigationComplete)
+            while (!m_navigationComplete && !m_applicationClosing)
                 Application.DoEvents();
 
             if (!scrollToBottom)
@@ -230,7 +232,7 @@ namespace AlexaDo
                 // Next action will navigate, reset wait flag
                 m_navigationComplete = false;
 
-                while (!m_navigationComplete)
+                while (!m_navigationComplete && !m_applicationClosing)
                 {
                     // See if cached user credentials exist
                     if (string.IsNullOrWhiteSpace(userName) || string.IsNullOrWhiteSpace(password))
@@ -246,14 +248,19 @@ namespace AlexaDo
                         AutomatedLogin(doc, userName, password);
                     }
 
-                    while (!m_navigationComplete)
+                    while (!m_navigationComplete && !m_applicationClosing)
                         Application.DoEvents();
+
+                    if (m_applicationClosing)
+                        break;
 
                     // Arrival at echo.amazon.com indicates successful authentication
                     if ((object)doc.Url != null && doc.Url.Host.Equals("echo.amazon.com", StringComparison.OrdinalIgnoreCase))
                     {
                         if (manualLogin)
                         {
+                            Log.Debug("Manual login succeeded.");
+
                             try
                             {
                                 // Cache credentials for future logins (will be encrypted)
@@ -268,12 +275,17 @@ namespace AlexaDo
                                 m_echoMonitor.ShowNotification(string.Format("Failed to cache user credentials: {0}", ex.Message), ToolTipIcon.Error);
                             }
                         }
+                        else
+                        {
+                            Log.Debug("Automated login succeeded.");
+                        }
 
                         Settings.Authenticated = true;
                         m_automatedLoginAttempts = 0;
-                        m_echoMonitor.HideWindow();
                         m_echoMonitor.ShowNotification("Successfully authenticated with Amazon Echo, starting activity monitoring cycle...", ToolTipIcon.Info);
-
+#if !DEBUG
+                        m_echoMonitor.HideWindow();
+#endif
                         // Establish dynamic notification if possible, this prevents the need to poll
                         EstablishWebSocketListener();
                     }
@@ -317,66 +329,71 @@ namespace AlexaDo
         // attach to Echo communications stack, see: http://www.piettes.com/echo/viewtopic.php?f=3&t=10
         private void EstablishWebSocketListener()
         {
+            const string activityMonitorScript =
+                "function startMonitor() {" +
+                "   $('body').css('display', 'none');\r\n" +
+                "   $('html').append('<h1>Monitoring Echo Activity...</h1>');\r\n" +
+                "   $('html').append('<div id=\"echochamber\" style=\"position: fixed; top:50%; left: 50%; transform: translate(-50%, -50%);\"><h1 class=\"command\">Waiting for you to interact with Alexa...</h1><br /><div class=\"output\" style=\"max-width: 50%; font-size: 10px; font-family: monospace\" /></div>');\r\n" +
+                "   $('html').append('<div id=\"echochamber_note\" style=\"position: fixed; bottom:50px; left: 50%; transform: translate(-50%, -50%);\"><em>Commands you say that trigger a card to be created will show up here... Try \"tell me a joke\".</em></div>');\r\n" +
+                "   // On card create notification, fetch card details and display\r\n" +
+                "   var onPushActivity = function(c) {\r\n" +
+                "       // resets\r\n" +
+                "       $('html').css('background-color', 'red');\r\n" +
+                "       $('#echochamber h1, #echochamber .output').text(\"\");\r\n\r\n" +
+                "       var b = c.key.registeredUserId + \"#\" + c.key.entryId;\r\n" +
+                "       var url = 'https://pitangui.amazon.com/api/activities/'+ encodeURIComponent(b);\r\n" +
+                "       $.get(url, function(data){\r\n" +
+                "           if (data.activity) {\r\n" +
+                "               // Trigger .NET call-back\r\n" +
+                "               window.external.EchoActivityCallback();\r\n\r\n" +
+                "               // Parse JSON response for display\r\n" +
+                "               var command;\r\n" +
+                "               if (data.activity.description) {\r\n" +
+                "                   command = JSON.parse(data.activity.description).summary;\r\n" +
+                "               }\r\n" +
+                "               // Show output\r\n" +
+                "               $('#echochamber h1').text(command);\r\n" +
+                "               $('#echochamber .output').text(JSON.stringify(data.activity, undefined, 2));\r\n" +
+                "           }\r\n" +
+                "           $('html').css('background-color', 'green');\r\n" +
+                "       });\r\n" +
+                "   };\r\n\r\n" +
+                "   // Attach to the card creation listener\r\n" +
+                "   var e = require(\"collections/cardstream/card-collection\").getInstance();\r\n" +
+                "   e.listenTo(e, \"pushMessage\", function(c){\r\n" +
+                "       onPushActivity(c);\r\n" +
+                "   });\r\n" +
+                "   return true;\r\n" +
+                "}";
+
             HtmlDocument doc = m_echoMonitor.BrowserControl.Document;
+            object response = null;
 
             // TODO: What to do if user navigates away from this page? Monitor for page change and switch to poll (maybe with a warning) or lock out browser control?
             // TODO: Maybe want to still use timer to query process activities, although on a longer interval, to make sure user session doesn't expire
             if ((object)doc != null && (object)doc.Body != null)
             {
-                doc.Body.InnerHtml =
-                    "<h1>Monitoring Echo Activity...</h1>\r\n" +
-                    "<div id=\"echochamber\" style=\"position: fixed; top:50%; left: 50%; transform: translate(-50%, -50%);\">\r\n" +
-                    "   <h1 class=\"command\">Waiting for you to interact with Alexa...</h1><br />\r\n" +
-                    "   <div class=\"output\" style=\"max-width: 50%; font-size: 10px; font-family: monospace\" />\r\n" +
-                    "</div>\r\n" +
-                    "<div id=\"echochamber_note\" style=\"position: fixed; bottom:50px; left: 50%; transform: translate(-50%, -50%);\">\r\n" +
-                    "  <em>Commands you say that trigger a card to be created will show up here... Try \"tell me a joke\".</em>\r\n" +
-                    "</div>\r\n" +
-                    "<script type=\"text/javascript\">" +
-                    "function startMonitor() {" +
-                    "   $('body').css('display', 'none');\r\n" +
-                    "   // on card create notification, fetch card details and display\r\n" +
-                    "   var onPushActivity = function(c) {\r\n" +
-                    "       // resets\r\n" +
-                    "       $('html').css('background-color', 'red');\r\n" +
-                    "       $('#echochamber h1, #echochamber .output').text(\"\");\r\n\r\n" +
-                    "       var b = c.key.registeredUserId + \"#\" + c.key.entryId;\r\n" +
-                    "       var url = 'https://pitangui.amazon.com/api/activities/'+ encodeURIComponent(b);\r\n" +
-                    "       $.get(url, function(data){\r\n" +
-                    "           if (data.activity) {\r\n" +
-                    "               // trigger .NET call-back\r\n" +
-                    "               window.external.EchoActivityCallback();\r\n\r\n" +
-                    "               // Parse JSON response for display\r\n" +
-                    "               var command;\r\n" +
-                    "               if (data.activity.description) {\r\n" +
-                    "                   command = JSON.parse(data.activity.description).summary;\r\n" +
-                    "               }\r\n" +
-                    "               // show output\r\n" +
-                    "               $('#echochamber h1').text(command);\r\n" +
-                    "               $('#echochamber .output').text(JSON.stringify(data.activity, undefined, 2));\r\n" +
-                    "           }\r\n" +
-                    "           $('html').css('background-color', 'green');\r\n" +
-                    "       });\r\n" +
-                    "   };\r\n\r\n" +
-                    "   // attach to the card creation listener\r\n" +
-                    "   var e = require(\"collections/cardstream/card-collection\").getInstance();\r\n" +
-                    "   e.listenTo(e, \"pushMessage\", function(c){\r\n" +
-                    "       onPushActivity(c);\r\n" +
-                    "   });\r\n" +
-                    "   return true;\r\n" +
-                    "}" +
-                    "</script>";
+                HtmlElement head = doc.GetElementsByTagName("head")[0];
+                HtmlElement script = doc.CreateElement("script");
 
-                // TODO: Debug this, validate that script is actually running
-                object response = doc.InvokeScript("startMonitor");
-                Debug.WriteLine("function startMonitor() response = {0}", response.ToNonNullNorEmptyString("NO RESPONSE!"));
-
-                // If dynamic monitoring is not available, start activity query on a timer
-                if (!response.ToNonNullNorEmptyString("false").ParseBoolean())
+                if ((object)script != null)
                 {
-                    m_echoMonitor.QueryTimer.Enabled = true;
-                    m_echoMonitor.ShowNotification("Using timer based query for activity polling, web socket is unavailable...", ToolTipIcon.Warning);
+                    script.SetAttribute("text", activityMonitorScript);
+                    head.AppendChild(script);
+                    response = doc.InvokeScript("startMonitor");
                 }
+            }
+
+            // If dynamic monitoring is not available, start activity query on a timer
+            if (response.ToNonNullNorEmptyString("false").ParseBoolean())
+            {
+                Log.Debug("Successfully established Websocket monitor for Echo activities.");
+            }
+            else
+            {
+                Log.Debug("Failed to establish Websocket monitor for Echo activities.");
+                m_echoMonitor.QueryTimer.Enabled = true;
+                m_echoMonitor.ShowNotification("Using timer based query for activity polling, web socket is unavailable...", ToolTipIcon.Warning);
             }
         }
 
@@ -464,7 +481,7 @@ namespace AlexaDo
         {
             // Cancel any pending navigation waiters when application is exiting - note that the UserClosing
             // reason is an exception since this just minimizes application to the task area
-            m_navigationComplete = e.CloseReason != CloseReason.UserClosing;
+            m_applicationClosing = e.CloseReason != CloseReason.UserClosing;
         }
 
         private void BrowserControl_DocumentCompleted(object sender, WebBrowserDocumentCompletedEventArgs e)
@@ -488,6 +505,13 @@ namespace AlexaDo
                 m_lastPostData.Clear();
             }
         }
+
+        #endregion
+
+        #region [ Static ]
+
+        // Static Fields
+        private static readonly ILog Log = LogManager.GetLogger(typeof(AuthenticationManager));
 
         #endregion
     }

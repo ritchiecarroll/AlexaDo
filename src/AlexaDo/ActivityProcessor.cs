@@ -24,6 +24,7 @@ using GSF;
 using GSF.IO;
 using GSF.Units;
 using Json;
+using log4net;
 
 namespace AlexaDo
 {
@@ -202,16 +203,20 @@ namespace AlexaDo
 
                                 // Only process successful activities that have occurred recently - note that
                                 // if local clock is way off, things may never get processed
-                                if (activity.Status.Equals("SUCCESS", StringComparison.OrdinalIgnoreCase) &&
-                                    Math.Abs((DateTime.UtcNow - activity.Time).TotalSeconds) <= Settings.TimeTolerance)
+                                if ((activity.Status.Equals("SUCCESS", StringComparison.OrdinalIgnoreCase) ||
+                                     activity.Status.Equals("SYSTEM_ABANDONED", StringComparison.OrdinalIgnoreCase)) &&
+                                     Math.Abs((DateTime.UtcNow - activity.Time).TotalSeconds) <= Settings.TimeTolerance)
                                 {
                                     UpdateStatus("Processing Echo activity \"[{0}]: {1}\"", activity.Status, activity.Command);
 
+                                    // TODO: Refactor to work without "stop" suffix - this doesn't come with the heard text:
                                     bool startKeyWordDetected = activity.Command.StartsWith(Settings.StartKeyWord, StringComparison.OrdinalIgnoreCase);
                                     bool endKeyWordDetected = activity.Command.EndsWith(Settings.EndKeyWord, StringComparison.OrdinalIgnoreCase);
 
                                     if (startKeyWordDetected || endKeyWordDetected)
                                     {
+                                        Log.DebugFormat("Detected command \"{0}\": {1}.", activity.Command, activity.ID);
+
                                         // Remove key word from command
                                         activity.Command = startKeyWordDetected ?
                                             activity.Command.Substring(Settings.StartKeyWord.Length) :
@@ -329,6 +334,9 @@ namespace AlexaDo
         #endregion
 
         #region [ Static ]
+
+        // Static Fields
+        private static readonly ILog Log = LogManager.GetLogger(typeof(ActivityProcessor));
 
         // Static Methods
         [DllImport("wininet.dll", CharSet = CharSet.Auto, SetLastError = true)]

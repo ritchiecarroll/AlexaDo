@@ -29,6 +29,9 @@ namespace AlexaDo
     /// </summary>
     public partial class EchoMonitor : Form
     {
+        #region [ Members ]
+
+        // Fields
         private AuthenticationManager m_authenticationManager;
         private ActivityProcessor m_activityProcessor;
         private CategorizedSettingsElementCollection m_userSettings;
@@ -38,6 +41,10 @@ namespace AlexaDo
         private int m_processAttempts;
         private Ticks m_lastProcessAttemptTime;
 
+        #endregion
+
+        #region [ Constructors ]
+
         /// <summary>
         /// Creates a new <see cref="EchoMonitor"/> form instance.
         /// </summary>
@@ -46,88 +53,9 @@ namespace AlexaDo
             InitializeComponent();
         }
 
-        internal void ShowNotification(string message, ToolTipIcon icon = ToolTipIcon.None, int timeout = 1500, bool forceDisplay = false)
-        {
-            NotifyIcon.BalloonTipText = message;
-            NotifyIcon.BalloonTipIcon = icon;
+        #endregion
 
-            if (!Visible || forceDisplay)
-                NotifyIcon.ShowBalloonTip(timeout);
-
-            UpdateStatus(string.Format("{0}{1}", icon == ToolTipIcon.None ? "" : string.Format("{0}: ", icon), message));
-
-            switch (icon)
-            {
-                case ToolTipIcon.Warning:
-                    Log.Warn(message);
-                    break;
-                case ToolTipIcon.Error:
-                    Log.Error(message);
-                    break;
-                default:
-                    Log.Info(message);
-                    break;
-            }
-        }
-
-        internal void UpdateStatus(string message, params object[] args)
-        {
-            StatusLabel.Text = string.Format("[{0:F}] {1}", DateTime.Now, string.Format(message, args));
-        }
-
-        internal void ShowWindow()
-        {
-            Show();
-            WindowState = FormWindowState.Normal;
-
-            if (m_initialDisplay)
-            {
-                m_initialDisplay = false;
-                Size = m_initialSize;
-                Location = m_initialLocation;
-            }
-
-            Activate();
-        }
-
-        internal void HideWindow(bool notify = false)
-        {
-            if (notify)
-                ShowNotification(string.Format("{0} still running in task bar...", NotifyIcon.Tag), ToolTipIcon.Info, forceDisplay: true);
-
-            Hide();
-        }
-
-        internal void TryProcessActivities()
-        {
-            if ((object)m_activityProcessor == null)
-                return;
-
-            // To allow calls to this function from other threads, queue call for message loop processing
-            if (InvokeRequired)
-            {
-                BeginInvoke((Action)TryProcessActivities);
-                return;
-            }
-
-            // If did not process activities, retry authentication
-            if (m_activityProcessor.ProcessActivities())
-            {
-                m_processAttempts = 0;
-                m_lastProcessAttemptTime = DateTime.UtcNow.Ticks;
-            }
-            else
-            {
-                m_processAttempts++;
-
-                // If processing attempts keep failing, retry authentication
-                if (m_processAttempts > 4 && (DateTime.UtcNow.Ticks - m_lastProcessAttemptTime).ToSeconds() > 10.0D)
-                    Reauthenticate(false);
-            }
-
-            NotifyIcon.Text = string.Format("{0} - {1}", NotifyIcon.Tag, Settings.Authenticated ?
-                string.Format("Authenticated, {0:N0} queries", m_activityProcessor.TotalQueries) : "Not Authenticated");
-        }
+        #region [ Event Handlers ]
 
         private void Browser_Load(object sender, EventArgs e)
         {
@@ -246,6 +174,119 @@ namespace AlexaDo
             SelectVoice(e.ClickedItem.Text);
         }
 
+        #endregion
+
+        #region [ Methods ]
+
+        /// <summary>
+        /// Windows Form base class message processing function.
+        /// </summary>
+        /// <param name="m">The Windows <see cref="Message"/> to process.</param>
+        protected override void WndProc(ref Message m)
+        {
+            const int WM_SYSCOMMAND = 0x0112;
+            const int SC_MINIMIZE = 0xF020;
+            bool handled = false;
+
+            switch (m.Msg)
+            {
+                // Preempt minimize message so we can save window size and position prior to minimization
+                case WM_SYSCOMMAND:
+                    if ((m.WParam.ToInt32() & 0xfff0) == SC_MINIMIZE)
+                    {
+                        HideWindow(true);
+                        handled = true;
+                    }
+                    break;
+            }
+
+            if (!handled)
+                base.WndProc(ref m);
+        }
+
+        internal void ShowNotification(string message, ToolTipIcon icon = ToolTipIcon.None, int timeout = 1500, bool forceDisplay = false)
+        {
+            NotifyIcon.BalloonTipText = message;
+            NotifyIcon.BalloonTipIcon = icon;
+
+            if (!Visible || forceDisplay)
+                NotifyIcon.ShowBalloonTip(timeout);
+
+            UpdateStatus(string.Format("{0}{1}", icon == ToolTipIcon.None ? "" : string.Format("{0}: ", icon), message));
+
+            switch (icon)
+            {
+                case ToolTipIcon.Warning:
+                    Log.Warn(message);
+                    break;
+                case ToolTipIcon.Error:
+                    Log.Error(message);
+                    break;
+                default:
+                    Log.Info(message);
+                    break;
+            }
+        }
+
+        internal void UpdateStatus(string message, params object[] args)
+        {
+            StatusLabel.Text = string.Format("[{0:F}] {1}", DateTime.Now, string.Format(message, args));
+        }
+
+        internal void ShowWindow()
+        {
+            Show();
+            WindowState = FormWindowState.Normal;
+
+            if (m_initialDisplay)
+            {
+                m_initialDisplay = false;
+                Size = m_initialSize;
+                Location = m_initialLocation;
+            }
+
+            Activate();
+        }
+
+        internal void HideWindow(bool notify = false)
+        {
+            if (notify)
+                ShowNotification(string.Format("{0} still running in task bar...", NotifyIcon.Tag), ToolTipIcon.Info, forceDisplay: true);
+
+            Hide();
+        }
+
+        internal void TryProcessActivities()
+        {
+            if ((object)m_activityProcessor == null)
+                return;
+
+            // To allow calls to this function from other threads, queue call for message loop processing
+            if (InvokeRequired)
+            {
+                BeginInvoke((Action)TryProcessActivities);
+                return;
+            }
+
+            // If did not process activities, retry authentication
+            if (m_activityProcessor.ProcessActivities())
+            {
+                m_processAttempts = 0;
+                m_lastProcessAttemptTime = DateTime.UtcNow.Ticks;
+            }
+            else
+            {
+                m_processAttempts++;
+
+                // If processing attempts keep failing, retry authentication
+                if (m_processAttempts > 4 && (DateTime.UtcNow.Ticks - m_lastProcessAttemptTime).ToSeconds() > 10.0D)
+                    Reauthenticate(false);
+            }
+
+            NotifyIcon.Text = string.Format("{0} - {1}", NotifyIcon.Tag, Settings.Authenticated ?
+                string.Format("Authenticated, {0:N0} queries", m_activityProcessor.TotalQueries) : "Not Authenticated");
+        }
+
         private void Reauthenticate(bool clearCredentials)
         {
             QueryTimer.Enabled = false;
@@ -304,35 +345,13 @@ namespace AlexaDo
             m_userSettings["TTSVoice"].Value = VoiceDropDown.Text;
         }
 
-        /// <summary>
-        /// Windows Form base class message processing function.
-        /// </summary>
-        /// <param name="m">The Windows <see cref="Message"/> to process.</param>
-        protected override void WndProc(ref Message m)
-        {
-            const int WM_SYSCOMMAND = 0x0112;
-            const int SC_MINIMIZE = 0xF020;
-            bool handled = false;
+        #endregion
 
-            switch (m.Msg)
-            {
-                // Preempt minimize message so we can save window size and position prior to minimization
-                case WM_SYSCOMMAND:
-                    if ((m.WParam.ToInt32() & 0xfff0) == SC_MINIMIZE)
-                    {
-                        HideWindow(true);
-                        handled = true;
-                    }
-                    break;
-            }
+        #region [ Static ]
 
-            if (!handled)
-                base.WndProc(ref m);
-        }
+        // Static Fields
+        private static readonly ILog Log = LogManager.GetLogger(typeof(EchoMonitor));
 
-        /// <summary>
-        /// log4net log writer.
-        /// </summary>
-        internal static readonly ILog Log = LogManager.GetLogger(typeof(EchoMonitor));
+        #endregion
     }
 }
