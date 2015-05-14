@@ -153,7 +153,7 @@ namespace AlexaDo
                     // following seems to work OK and allows operation on another thread:
                     using (WebClient client = new WebClient())
                     {
-                        const string url = Settings.BaseURL + Settings.ActivitiesAPI;
+                        const string url = Settings.BaseURL + Settings.ActivitiesAPI + Settings.QueryTopFiveActivities;
                         uint datasize = 32768;
 
                         StringBuilder cookieData = new StringBuilder((int)datasize);
@@ -201,30 +201,32 @@ namespace AlexaDo
                                 m_processedActivities.Add(activity);
                                 processCacheUpdated = true;
 
-                                // Only process successful activities that have occurred recently - note that
+                                // Only process activities that have occurred recently - note that
                                 // if local clock is way off, things may never get processed
-                                if ((activity.Status.Equals("SUCCESS", StringComparison.OrdinalIgnoreCase) ||
-                                     activity.Status.Equals("SYSTEM_ABANDONED", StringComparison.OrdinalIgnoreCase)) &&
-                                     Math.Abs((DateTime.UtcNow - activity.Time).TotalSeconds) <= Settings.TimeTolerance)
+                                if (Math.Abs((DateTime.UtcNow - activity.Time).TotalSeconds) <= Settings.TimeTolerance)
                                 {
-                                    UpdateStatus("Processing Echo activity \"[{0}]: {1}\"", activity.Status, activity.Command);
+                                    // Check for commands ending with "Stop"
+                                    bool processCommand = activity.Status.Equals("SYSTEM_ABANDONED", StringComparison.OrdinalIgnoreCase);
 
-                                    // TODO: Refactor to work without "stop" suffix - this doesn't come with the heard text:
-                                    bool startKeyWordDetected = activity.Command.StartsWith(Settings.StartKeyWord, StringComparison.OrdinalIgnoreCase);
-                                    bool endKeyWordDetected = activity.Command.EndsWith(Settings.EndKeyWord, StringComparison.OrdinalIgnoreCase);
-
-                                    if (startKeyWordDetected || endKeyWordDetected)
+                                    // Also check for commands beginning with key word, e.g., "Simon Says"
+                                    if (!processCommand &&
+                                        activity.Status.Equals("SUCCESS", StringComparison.OrdinalIgnoreCase) &&
+                                        activity.Command.StartsWith(Settings.KeyWord, StringComparison.OrdinalIgnoreCase))
                                     {
-                                        Log.DebugFormat("Detected command \"{0}\": {1}.", activity.Command, activity.ID);
+                                        processCommand = true;
 
                                         // Remove key word from command
-                                        activity.Command = startKeyWordDetected ?
-                                            activity.Command.Substring(Settings.StartKeyWord.Length) :
-                                            activity.Command.Substring(activity.Command.Length - Settings.EndKeyWord.Length);
+                                        if (activity.Command.StartsWith(Settings.KeyWord, StringComparison.OrdinalIgnoreCase))
+                                            activity.Command = activity.Command.Substring(Settings.KeyWord.Length);
+                                    }
 
+                                    if (processCommand)
+                                    {
+                                        UpdateStatus("Processing Echo activity [{0}]: {1} \"{2}\"", activity.Status, activity.ID, activity.Command);
+#if DEBUG
                                         if (Settings.TTSFeedbackEnabled)
                                             TTSEngine.Speak("Processing command: " + activity.Command);
-
+#endif
                                         // TODO: Process plug-ins
                                     }
                                 }
@@ -259,9 +261,9 @@ namespace AlexaDo
                             SerializeProcessedActivitiesCache(processedCacheFileName);
 
                         UpdateStatus("Query {0:N0} processed {1:N0} Echo activities in {2}", ++m_totalQueries, encounteredActivities.Count, (DateTime.UtcNow.Ticks - startTime).ToElapsedTimeString(2));
-
-                        return true;
                     }
+
+                    return true;
                 }
             }
             catch (Exception ex)

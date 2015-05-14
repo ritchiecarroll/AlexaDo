@@ -18,7 +18,6 @@ using System.Drawing;
 using System.Linq;
 using System.Speech.Synthesis;
 using System.Windows.Forms;
-using GSF;
 using GSF.Configuration;
 using log4net;
 
@@ -38,8 +37,6 @@ namespace AlexaDo
         private bool m_initialDisplay;
         private Size m_initialSize;
         private Point m_initialLocation;
-        private int m_processAttempts;
-        private Ticks m_lastProcessAttemptTime;
 
         #endregion
 
@@ -261,29 +258,24 @@ namespace AlexaDo
             if ((object)m_activityProcessor == null)
                 return;
 
-            // To allow calls to this function from other threads, queue call for message loop processing
-            if (InvokeRequired)
-            {
-                BeginInvoke((Action)TryProcessActivities);
-                return;
-            }
-
             // If did not process activities, retry authentication
-            if (m_activityProcessor.ProcessActivities())
-            {
-                m_processAttempts = 0;
-                m_lastProcessAttemptTime = DateTime.UtcNow.Ticks;
-            }
+            if (!m_activityProcessor.ProcessActivities())
+                Reauthenticate(false);
+
+            // To allow update operation to be run from other threads, queue call for message loop processing if needed
+            if (InvokeRequired)
+                BeginInvoke((Action)UpdateTaskbarTooltip);
             else
-            {
-                m_processAttempts++;
+                UpdateTaskbarTooltip();
+        }
 
-                // If processing attempts keep failing, retry authentication
-                if (m_processAttempts > 4 && (DateTime.UtcNow.Ticks - m_lastProcessAttemptTime).ToSeconds() > 10.0D)
-                    Reauthenticate(false);
-            }
+        private void UpdateTaskbarTooltip()
+        {
+            if ((object)m_activityProcessor == null)
+                return;
 
-            NotifyIcon.Text = string.Format("{0} - {1}", NotifyIcon.Tag, Settings.Authenticated ?
+            NotifyIcon.Text =
+                string.Format("{0} - {1}", NotifyIcon.Tag, Settings.Authenticated ?
                 string.Format("Authenticated, {0:N0} queries", m_activityProcessor.TotalQueries) : "Not Authenticated");
         }
 

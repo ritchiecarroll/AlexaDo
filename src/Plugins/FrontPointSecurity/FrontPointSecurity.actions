@@ -1,0 +1,69 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<commands>
+  <command description="Arm Front Point Security" usage="alexa simon says arm security" enabled="false">
+    <trigger>
+      <keyPhrase>arm,security|set,security|enable,security|turn on,security</keyPhrase>
+      <matchStyle>AnyOrder</matchStyle>
+    </trigger>
+    <action>
+      <assemblyName>FrontPointSecurity.dll</assemblyName>
+      <typeName>FrontPointSecurity.ArmSystem</typeName>
+      <parameters encrypted="false">userName=your@email.com; password=yourPassword</parameters>
+    </action>
+    <response>
+      <succeeded type="wav" filename="FrontPointSecurity\Arming.wav">Security system is now being armed.</succeeded>
+      <failed type="tts">Unable to arm system, [reason].</failed>
+    </response>
+    <notes>
+      <![CDATA[
+        Examples:
+          alexa simon says arm the security system away
+          alexa simon says set the security system stay
+          alexa simon says turn on security quietly
+          alexa simon says silently set the security system
+          
+        ToDo: Update parameters with your myfrontpoint.com credentials
+      ]]>
+    </notes>
+  </command>
+  <command description="Disarm Front Point Security" usage="alexa simon says disarm security" enabled="false">
+    <trigger>
+      <keyPhrase>disarm,security|unset,security|disable,security|turn off,security</keyPhrase>
+      <matchStyle>AnyOrder</matchStyle>
+    </trigger>
+    <action>
+      <assemblyName>FrontPointSecurity.dll</assemblyName>
+      <typeName>FrontPointSecurity.DisarmSystem</typeName>
+      <parameters encrypted="false">userName=your@email.com; password=yourPassword</parameters>
+    </action>
+    <response>
+      <succeeded type="wav" filename="FrontPointSecurity\Disarming.wav">System is now being disarmed.</succeeded>
+      <failed type="tts">Unable to disarm system, [reason].</failed>
+    </response>
+    <notes>
+      <![CDATA[
+        Examples:
+          alexa simon says disarm the security system 
+          alexa simon says set the security system stay
+          alexa simon says turn on security quietly
+          alexa simon says silently set the security system
+          
+        ToDo: Update parameters with your myfrontpoint.com credentials
+        Note: It is recommended to add a personal password so that not anyone can walk in
+              and disarm your system. You can do this by adding the password as a required
+              key pharase. For example, say your password is Picard09, you would update
+              the key phrase like so:
+      
+              <keyPhrase>
+                disarm,security,picard zero nine|
+                unset,security,picard zero nine|
+                disable,security,picard zero nine|
+                turn off,security,picard zero nine
+              </keyPhrase>
+        
+              Now your verbal password is required to disarm the system, for example:            
+                alexa simon says disarm the security system authorization picard09
+      ]]>
+    </notes>
+  </command>
+</commands>

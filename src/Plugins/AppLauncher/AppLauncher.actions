@@ -1,0 +1,53 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<commands>
+  <command description="OK Google Responder" usage="alexa simon says google [query]" enabled="true">
+    <trigger>
+      <keyPhrase>google|ok google</keyPhrase>
+      <matchStyle>StartsWith</matchStyle>
+    </trigger>
+    <action>
+      <assemblyName>AppLauncher.dll</assemblyName>
+      <typeName>AppLauncher.Execute</typeName>
+      <parameters encrypted="false">program={chrome &quot;https://www.google.com/search?gs_ivs=1&amp;q=[query]&quot;}; queryEncoding=URL; window=hidden</parameters>
+    </action>
+    <response>
+      <succeeded />
+      <failed type="tts">Unable to start chrome, [reason].</failed>
+    </response>
+    <notes>
+      <![CDATA[
+        Examples:
+          alexa google when was george washington born stop
+          alexa simon says ok google whats the meaning of life
+          
+        Note: that you may need to enable "OK Google" to start a voice search in Chrome settings in order for query
+              results to be spoken.
+      ]]>
+    </notes>
+  </command>
+  <command description="E-mail Me" usage="alexa simon says email me [query]" enabled="false">
+    <trigger>
+      <keyPhrase>email me|remind me</keyPhrase>
+      <matchStyle>StartsWith</matchStyle>
+    </trigger>
+    <action>
+      <assemblyName>AppLauncher.dll</assemblyName>
+      <typeName>AppLauncher.Execute</typeName>
+      <parameters encrypted="false">program={mailsend -to you@gmail.com -from alexa@amazon.com -starttls -port 587 -auth -smtp smtp.gmail.com -sub &quot;Your message from Alexa...&quot; -cs &quot;us-ascii&quot; -enc-type &quot;7bit&quot; -M &quot;[query]&quot; -user you@gmail.com -pass &quot;your_password&quot;}; queryEncoding=UTF8; window=hidden</parameters>
+    </action>
+    <response>
+      <succeeded type="tts">Message sent.</succeeded>
+      <failed type="tts">Unable to send message, [reason].</failed>
+    </response>
+    <notes>
+      <![CDATA[
+        Examples:
+          alexa email me bring an umbrella to work tomorrow stop
+          alexa simon says remind me valentines day is next tuesday
+        
+        ToDo: Update parameters with your e-mail address and credentials
+        Note: mailsend needs to be in path or AlexaDo folder, see: http://github.com/muquit/mailsend.
+      ]]>
+    </notes>
+  </command>
+</commands>

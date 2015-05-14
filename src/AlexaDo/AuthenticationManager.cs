@@ -13,9 +13,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Windows.Forms;
 using GSF;
 using GSF.Configuration;
@@ -24,29 +23,6 @@ using log4net;
 
 namespace AlexaDo
 {
-    /// <summary>
-    /// Defines a simple COM based interface to accept call backs from JavaScript on WebBrowser
-    /// </summary>
-    [ComVisible(true)]
-    public class ScriptInterface
-    {
-        /// <summary>
-        /// Event raised when new Echo Activity has been received.
-        /// </summary>
-        public event EventHandler ReceivedEchoActivity;
-
-        /// <summary>
-        /// JavaScript call back function for received Echo activities.
-        /// </summary>
-        public void EchoActivityCallback()
-        {
-            Debug.WriteLine("Activity call back received at {0:yyyy-MM-dd HH:mm:ss.000}", DateTime.UtcNow);
-
-            if ((object)ReceivedEchoActivity != null)
-                ReceivedEchoActivity(this, EventArgs.Empty);
-        }
-    }
-
     /// <summary>
     /// Provides Amazon Echo authentication handling.
     /// </summary>
@@ -81,7 +57,7 @@ namespace AlexaDo
         public AuthenticationManager(EchoMonitor echoMonitor)
         {
             m_echoMonitor = echoMonitor;
-            m_processActivites = new ShortSynchronizedOperation(m_echoMonitor.TryProcessActivities);
+            m_processActivites = new ShortSynchronizedOperation(ProcessNewActivities);
             m_lastPostData = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             // Make sure default user settings exist
@@ -332,16 +308,18 @@ namespace AlexaDo
             const string activityMonitorScript =
                 "function startMonitor() {" +
                 "   $('body').css('display', 'none');\r\n" +
-                "   $('html').append('<h1>Monitoring Echo Activity...</h1>');\r\n" +
+                "   $('html').append('<div style=\"position: fixed; top:2%; left: 2%; transform: translate(-2%, -2%);\"><h2>Monitoring Echo Activity...</h2></div>');\r\n" +
                 "   $('html').append('<div id=\"echochamber\" style=\"position: fixed; top:50%; left: 50%; transform: translate(-50%, -50%);\"><h1 class=\"command\">Waiting for you to interact with Alexa...</h1><br /><div class=\"output\" style=\"max-width: 50%; font-size: 10px; font-family: monospace\" /></div>');\r\n" +
                 "   $('html').append('<div id=\"echochamber_note\" style=\"position: fixed; bottom:50px; left: 50%; transform: translate(-50%, -50%);\"><em>Commands you say that trigger a card to be created will show up here... Try \"tell me a joke\".</em></div>');\r\n" +
+                "   $('html').css('background-color', 'white');\r\n" +
                 "   // On card create notification, fetch card details and display\r\n" +
                 "   var onPushActivity = function(c) {\r\n" +
                 "       // resets\r\n" +
                 "       $('html').css('background-color', 'red');\r\n" +
+                "       setTimeout(function() { $('html').css('background-color', 'white'); }, 5000);\r\n" +
                 "       $('#echochamber h1, #echochamber .output').text(\"\");\r\n\r\n" +
                 "       var b = c.key.registeredUserId + \"#\" + c.key.entryId;\r\n" +
-                "       var url = 'https://pitangui.amazon.com/api/activities/'+ encodeURIComponent(b);\r\n" +
+                "       var url = '" + Settings.BaseURL + Settings.ActivitiesAPI + "/'+ encodeURIComponent(b);\r\n" +
                 "       $.get(url, function(data){\r\n" +
                 "           if (data.activity) {\r\n" +
                 "               // Trigger .NET call-back\r\n" +
@@ -471,10 +449,19 @@ namespace AlexaDo
 
         private void scriptInterface_ReceivedEchoActivity(object sender, EventArgs e)
         {
+            // Queue up operation for asynchronous execution and return control to Browser script asap.
             // May get multiple activity notifications in quick succession, so only invoke operation once,
             // subsequent calls will be marked as pending and one extra call will be made upon primary
-            // call completion to make sure no activities miss processing
-            m_processActivites.RunOnce();
+            // call completion to make sure no activities miss processing.
+            m_processActivites.RunOnceAsync();
+        }
+
+        private void ProcessNewActivities()
+        {
+            // There may be several activities for a single voice command, e.g., one for Alexa and another for the speech heard, so
+            // wait a half-second or so before kicking off activity processing
+            Thread.Sleep(500);
+            m_echoMonitor.TryProcessActivities();
         }
 
         private void m_echoMonitor_FormClosing(object sender, FormClosingEventArgs e)

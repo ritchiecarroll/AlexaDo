@@ -2,6 +2,7 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
   <Product Id="*" Name="AlexaDo" Language="1033" Version="!(bind.FileVersion.AlexaDo.exe)" Manufacturer="J. Ritchie Carroll" UpgradeCode="8cff82ac-af1b-491d-a4d5-045c639aa567">
     <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+
     <PropertyRef Id="NETFRAMEWORK45"/>
 
     <Condition Message='This setup requires Microsoft .NET Framework 4.5 or greater - this will need to be installed before installation can continue.'>
@@ -11,25 +12,71 @@
     <MajorUpgrade Schedule="afterInstallInitialize" DowngradeErrorMessage="A newer version of [ProductName] is already installed. Setup will now exit." />
     <MediaTemplate EmbedCab="yes" />
 
-    <Feature Id="ProductFeature" Title="Setup" Level="1">
-      <ComponentGroupRef Id="ProductComponents" />
+    <Feature Id="AllProducts" Title="All Products" Level="1" Display="expand" ConfigurableDirectory="INSTALLFOLDER" Description="All AlexDo Components">
+      <Feature Id="AlexaDoFeature" Title="Stream Splitter Service" Description="AlexaDo Amazon Echo Invocation Plug-in Application">
+        <ComponentRef Id="AlexaDo" />
+      </Feature>
+
+      <ComponentGroupRef Id="Dependencies" />
+      <ComponentRef Id="Cleanup" />
     </Feature>
   </Product>
 
   <Fragment>
     <Directory Id="TARGETDIR" Name="SourceDir">
+      <?if $(var.Platform) = x64 ?>
+      <Directory Id="ProgramFiles64Folder">
+        <!-- C:\Program Files\AlexaDo -->
+        <Directory Id="INSTALLFOLDER" Name="AlexaDo" />
+      </Directory>
+      <?else ?>
       <Directory Id="ProgramFilesFolder">
-        <Directory Id="INSTALLFOLDER" Name="Setup" />
+        <!-- C:\Program Files (x86)\AlexaDo -->
+        <Directory Id="INSTALLFOLDER" Name="AlexaDo" />
+      </Directory>
+      <?endif ?>
+
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="ApplicationProgramsFolder" Name="AlexaDo" />
       </Directory>
     </Directory>
   </Fragment>
 
   <Fragment>
     <ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
-      <!-- TODO: Remove the comments around this Component element and the ComponentRef below in order to add resources to this installer. -->
-      <!-- <Component Id="ProductComponent"> -->
-        <!-- TODO: Insert files, registry keys, and other resources here. -->
-      <!-- </Component> -->
+      <!-- Applications -->
+      <Component Id="AlexaDo">
+        <File Id="AlexaDo.exe" Name="$(var.AlexaDo.TargetFileName)" Source="$(var.AlexaDo.TargetPath)" />
+      </Component>
+
+      <!-- Cleanup -->
+      <Component Id="Cleanup" Guid="{E4A3FC2E-4D4C-4A9B-A1D5-1B95BBC33E90}">
+        <CreateFolder />
+        <RemoveFolder Id="RemoveApplicationProgramsFolder" Directory="ApplicationProgramsFolder" On="uninstall" />
+        <RemoveFolder Id="RemoveInstallFolder" Directory="INSTALLFOLDER" On="uninstall" />
+      </Component>
+    </ComponentGroup>
+
+    <ComponentGroup Id="Dependencies" Directory="INSTALLFOLDER">
+      <!-- Libraries -->
+      <Component Id="AlexaDoPlugin">
+        <File Id="AlexaDoPlugin.dll" Name="$(var.AlexaDoPlugin.TargetFileName)" Source="$(var.AlexaDoPlugin.TargetPath)" />
+      </Component>
+
+      <!-- Json Dependencies -->
+      <Component Id="Json">
+        <File Id="Json.dll" Name="Json.dll" Source="$(var.SolutionDir)\packages\JSON.1.0.1\lib\net40\Json.dll" />
+      </Component>
+
+      <!-- log4net Dependencies -->
+      <Component Id="log4net">
+        <File Id="log4net.dll" Name="log4net.dll" Source="$(var.SolutionDir)\packages\log4net.2.0.3\lib\net40-full\log4net.dll" />
+      </Component>
+
+      <!-- GSF Dependencies -->
+      <Component Id="GSF.Core">
+        <File Id="GSF.Core.dll" Name="GSF.Core.dll" Source="$(var.SolutionDir)\packages\GSF.Core.2.0.239\lib\net45\GSF.Core.dll" />
+      </Component>
     </ComponentGroup>
   </Fragment>
 </Wix>
