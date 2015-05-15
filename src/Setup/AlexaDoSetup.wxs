@@ -13,7 +13,7 @@
     <MediaTemplate EmbedCab="yes" />
 
     <Feature Id="AllProducts" Title="All Products" Level="1" Display="expand" ConfigurableDirectory="INSTALLFOLDER" Description="All AlexDo Components">
-      <Feature Id="AlexaDoFeature" Title="Stream Splitter Service" Description="AlexaDo Amazon Echo Invocation Plug-in Application">
+      <Feature Id="AlexaDoFeature" Title="AlexaDo Echo Monitor" Description="AlexaDo Amazon Echo Invocation Plug-in Application">
         <ComponentRef Id="AlexaDo" />
       </Feature>
 
