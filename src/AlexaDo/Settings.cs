@@ -40,6 +40,8 @@ namespace AlexaDo
 
         // Default browser user-agent
         private const string DefaultUserAgent = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36";
+
+        // Default key words to detect
         private const string DefaultStartKeyWord = "Simon Says";
         private const string DefaultEndKeyWord = "Stop";
 

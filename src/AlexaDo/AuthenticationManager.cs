@@ -82,9 +82,10 @@ namespace AlexaDo
                 // BrowserControl_BeforeNavigate2 event provides headers and post data
                 m_activeXReference.BeforeNavigate2 += BrowserControl_BeforeNavigate2;
             }
-            catch
+            catch (Exception ex)
             {
                 // Any possible failure here would not be fatal to overall operation
+                Log.ErrorFormat("Failed to register for low level navigation event, login credentials will not be cached: {0}", ex.Message);
             }
         }
 
@@ -158,8 +159,8 @@ namespace AlexaDo
         /// <summary>
         /// Authenticates with Amazon Echo web application.
         /// </summary>
-        /// <param name="clearCredentials">Set to <c>true</c> to clear any existing cached credentials.</param>
-        public void Authenticate(bool clearCredentials = false)
+        /// <param name="requestCredentials">Set to <c>true</c> to request new user credentials.</param>
+        public void Authenticate(bool requestCredentials = false)
         {
             try
             {
@@ -185,9 +186,9 @@ namespace AlexaDo
                 string userName = null, password = null;
                 bool manualLogin = false;
 
-                if (clearCredentials)
+                if (requestCredentials)
                 {
-                    ClearCredentials();
+                    // Logout, if currently logged in
                     Navigate(Settings.BaseURL + "/logout", true);
                 }
                 else
@@ -199,6 +200,7 @@ namespace AlexaDo
                     }
                     catch
                     {
+                        // We just clear the cache for any failures to get credentials, e.g, failure to decrypt
                         ClearCredentials();
                         userName = "";
                         password = "";
@@ -287,7 +289,7 @@ namespace AlexaDo
                             }
                             else
                             {
-                                // Clear current credentials and retry authentication - this will make Window pop-up and request user credentials
+                                // Show window and request user credentials
                                 Authenticate(true);
                                 break;
                             }
@@ -301,15 +303,16 @@ namespace AlexaDo
             }
         }
 
-        // Attempt to piggy-back Amazon Websockets for dynamic response - we do this by replacing page body with script to
-        // attach to Echo communications stack, see: http://www.piettes.com/echo/viewtopic.php?f=3&t=10
+        // Establish Echo activity monitoring - try web socket attachment, if this fails, fall back on timer query
         private void EstablishWebSocketListener()
         {
+            // Attempt to piggy-back Amazon Websockets for dynamic response - we do this by updating the current page with script to
+            // attach to the running Echo communications stack, see: http://www.piettes.com/echo/viewtopic.php?f=3&t=10
             const string activityMonitorScript =
                 "function startMonitor() {" +
                 "   $('body').css('display', 'none');\r\n" +
-                "   $('html').append('<div style=\"position: fixed; top:2%; left: 2%; transform: translate(-2%, -2%);\"><h2>Monitoring Echo Activity...</h2></div>');\r\n" +
-                "   $('html').append('<div id=\"echochamber\" style=\"position: fixed; top:50%; left: 50%; transform: translate(-50%, -50%);\"><h1 class=\"command\">Waiting for you to interact with Alexa...</h1><br /><div class=\"output\" style=\"max-width: 50%; font-size: 10px; font-family: monospace\" /></div>');\r\n" +
+                "   $('html').append('<div style=\"position: fixed; top:2%; left: 3%; transform: translate(-2%, -3%);\"><h2>Monitoring Echo Activity...</h2></div>');\r\n" +
+                "   $('html').append('<div id=\"echochamber\" style=\"position: fixed; top:50%; left: 50%; transform: translate(-50%, -50%);\"><h1 class=\"command\">Waiting for you to interact with Alexa...</h1><br /><div class=\"output\" style=\"max-width: 50%; font-size: 10px; font-family: monospace\" /><br /><h3 class=\"displayTime\"></h3></div>');\r\n" +
                 "   $('html').append('<div id=\"echochamber_note\" style=\"position: fixed; bottom:50px; left: 50%; transform: translate(-50%, -50%);\"><em>Commands you say that trigger a card to be created will show up here... Try \"tell me a joke\".</em></div>');\r\n" +
                 "   $('html').css('background-color', 'white');\r\n" +
                 "   // On card create notification, fetch card details and display\r\n" +
@@ -332,6 +335,7 @@ namespace AlexaDo
                 "               // Show output\r\n" +
                 "               $('#echochamber h1').text(command);\r\n" +
                 "               $('#echochamber .output').text(JSON.stringify(data.activity, undefined, 2));\r\n" +
+                "               $('#echochamber h3').text(\"Last command received at \" + Date());\r\n" +
                 "           }\r\n" +
                 "           $('html').css('background-color', 'green');\r\n" +
                 "       });\r\n" +
@@ -485,10 +489,11 @@ namespace AlexaDo
                 if ((object)data != null && data.Length > 0)
                     m_lastPostData = Encoding.UTF8.GetString(data).ParseKeyValuePairs('&');
             }
-            catch
+            catch (Exception ex)
             {
                 // Need post data to cache user credentials between runs, if this fails it's not the end of the world,
                 // it just means the user will need to login each time the application runs
+                Log.ErrorFormat("Failed to get post data, login credentials cannot be cached: {0}", ex.Message);
                 m_lastPostData.Clear();
             }
         }

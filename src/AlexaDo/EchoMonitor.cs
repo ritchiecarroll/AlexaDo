@@ -69,17 +69,20 @@ namespace AlexaDo
             // Restore last selected voice
             SelectVoice(m_userSettings["TTSVoice"].ValueAs(""));
 
-            // Start hidden
             m_initialDisplay = true;
             m_initialSize = Size;
             m_initialLocation = Location;
+#if !DEBUG
             WindowState = FormWindowState.Minimized;
+#endif
         }
 
         private void Browser_Shown(object sender, EventArgs e)
         {
+#if !DEBUG
+            // Start hidden
             HideWindow();
-
+#endif
             if ((object)m_activityProcessor == null)
                 m_activityProcessor = new ActivityProcessor(this);
 
@@ -187,7 +190,7 @@ namespace AlexaDo
 
             switch (m.Msg)
             {
-                // Preempt minimize message so we can save window size and position prior to minimization
+                // Preempt minimize message so we hide window
                 case WM_SYSCOMMAND:
                     if ((m.WParam.ToInt32() & 0xfff0) == SC_MINIMIZE)
                     {
@@ -279,12 +282,12 @@ namespace AlexaDo
                 string.Format("Authenticated, {0:N0} queries", m_activityProcessor.TotalQueries) : "Not Authenticated");
         }
 
-        private void Reauthenticate(bool clearCredentials)
+        private void Reauthenticate(bool requestCredentials)
         {
             QueryTimer.Enabled = false;
 
             if ((object)m_authenticationManager != null)
-                m_authenticationManager.Authenticate(clearCredentials);
+                m_authenticationManager.Authenticate(requestCredentials);
         }
 
         private void SelectVoice(string voiceName)

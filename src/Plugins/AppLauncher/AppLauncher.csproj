@@ -44,7 +44,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="AppLauncher.actions">
+    <None Include="AppLauncher.commands">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
