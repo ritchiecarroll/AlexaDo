@@ -40,13 +40,16 @@ namespace AlexaDo
 
         // Default browser user-agent
         private const string DefaultUserAgent = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36";
-        private const string DefaultKeyWord = "Simon Says";
+        private const string DefaultStartKeyWord = "Simon Says";
+        private const string DefaultEndKeyWord = "Stop";
+
 
         // Static Fields
         private readonly static string s_userAgent;
         private readonly static int s_queryInterval;
         private readonly static double s_timeTolerance;
-        private readonly static string s_keyWord;
+        private readonly static string s_startKeyWord;
+        private readonly static string s_endKeyWord;
         private static bool s_authenticated;
         private static bool s_ttsFeedbackEnabled;
 
@@ -62,14 +65,16 @@ namespace AlexaDo
             systemSettings.Add("UserAgent", "", "Browser User-Agent to use when authenticating", false, SettingScope.Application);
             systemSettings.Add("QueryInterval", "3", "Echo activity query interval, in seconds (integer)", false, SettingScope.Application);
             systemSettings.Add("TimeTolerance", "30.0", "Echo activity time processing tolerance, in seconds (floating-point)", false, SettingScope.Application);
-            systemSettings.Add("KeyWord", "", "Key word to recognize at start of command, defaults to Simon Says", false, SettingScope.Application);
+            systemSettings.Add("StartKeyWord", "", "Key word to recognize at start of command, defaults to Simon Says", false, SettingScope.Application);
+            systemSettings.Add("EndKeyWord", "", "Key word to recognize at end of command, defaults to Stop", false, SettingScope.Application);
             systemSettings.Add("TTSSpeed", "0", "Speech rate to use for TTS engine (-10 to 10)", false, SettingScope.Application);
 
             // Get current settings
             s_userAgent = systemSettings["UserAgent"].Value.ToNonNullNorWhiteSpace(DefaultUserAgent);
             s_queryInterval = systemSettings["QueryInterval"].ValueAs(3) * 1000;
             s_timeTolerance = systemSettings["TimeTolerance"].ValueAs(30.0);
-            s_keyWord = systemSettings["KeyWord"].Value.ToNonNullNorWhiteSpace(DefaultKeyWord);
+            s_startKeyWord = systemSettings["StartKeyWord"].Value.ToNonNullNorWhiteSpace(DefaultStartKeyWord);
+            s_endKeyWord = systemSettings["EndKeyWord"].Value.ToNonNullNorWhiteSpace(DefaultEndKeyWord);
 
             // Assign configured speech rate to text-to-speech engine
             TTSEngine.SetRate(systemSettings["TTSSpeed"].ValueAs(0));
@@ -113,11 +118,22 @@ namespace AlexaDo
         /// <summary>
         /// Gets the configured Echo key word for marking the start of commands, e.g., Simon Says.
         /// </summary>
-        public static string KeyWord
+        public static string StartKeyWord
         {
             get
             {
-                return s_keyWord;
+                return s_startKeyWord;
+            }
+        }
+
+        /// <summary>
+        /// Gets the configured Echo key word for marking the end of commands, e.g., Stop.
+        /// </summary>
+        public static string EndKeyWord
+        {
+            get
+            {
+                return s_endKeyWord;
             }
         }
 

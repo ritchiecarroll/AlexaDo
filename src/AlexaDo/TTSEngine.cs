@@ -75,7 +75,7 @@ namespace AlexaDo
 
         public static void Speak(string text)
         {
-            s_synthesizer.Speak(text);
+            s_synthesizer.SpeakAsync(text);
         }
 
         public static void SelectVoice(int voice)

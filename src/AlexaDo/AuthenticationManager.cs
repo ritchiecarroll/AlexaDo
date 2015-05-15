@@ -314,7 +314,7 @@ namespace AlexaDo
                 "   $('html').css('background-color', 'white');\r\n" +
                 "   // On card create notification, fetch card details and display\r\n" +
                 "   var onPushActivity = function(c) {\r\n" +
-                "       // resets\r\n" +
+                "       // Resets\r\n" +
                 "       $('html').css('background-color', 'red');\r\n" +
                 "       setTimeout(function() { $('html').css('background-color', 'white'); }, 5000);\r\n" +
                 "       $('#echochamber h1, #echochamber .output').text(\"\");\r\n\r\n" +

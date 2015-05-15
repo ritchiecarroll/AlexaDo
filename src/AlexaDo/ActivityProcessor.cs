@@ -205,19 +205,27 @@ namespace AlexaDo
                                 // if local clock is way off, things may never get processed
                                 if (Math.Abs((DateTime.UtcNow - activity.Time).TotalSeconds) <= Settings.TimeTolerance)
                                 {
-                                    // Check for commands ending with "Stop"
-                                    bool processCommand = activity.Status.Equals("SYSTEM_ABANDONED", StringComparison.OrdinalIgnoreCase);
+                                    bool processCommand = false;
+
+                                    // Check for commands ending with end key word, e.g, "Stop"
+                                    if (activity.Status.Equals("SYSTEM_ABANDONED", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        processCommand = true;
+
+                                        // Remove end key word from command, if it exists
+                                        if (activity.Command.StartsWith(Settings.EndKeyWord, StringComparison.OrdinalIgnoreCase))
+                                            activity.Command = activity.Command.Substring(activity.Command.Length - Settings.EndKeyWord.Length);
+                                    }
 
                                     // Also check for commands beginning with key word, e.g., "Simon Says"
                                     if (!processCommand &&
                                         activity.Status.Equals("SUCCESS", StringComparison.OrdinalIgnoreCase) &&
-                                        activity.Command.StartsWith(Settings.KeyWord, StringComparison.OrdinalIgnoreCase))
+                                        activity.Command.StartsWith(Settings.StartKeyWord, StringComparison.OrdinalIgnoreCase))
                                     {
                                         processCommand = true;
 
                                         // Remove key word from command
-                                        if (activity.Command.StartsWith(Settings.KeyWord, StringComparison.OrdinalIgnoreCase))
-                                            activity.Command = activity.Command.Substring(Settings.KeyWord.Length);
+                                        activity.Command = activity.Command.Substring(Settings.StartKeyWord.Length);
                                     }
 
                                     if (processCommand)

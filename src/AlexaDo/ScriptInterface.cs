@@ -44,7 +44,7 @@ namespace AlexaDo
             if ((object)ReceivedEchoActivity != null)
                 ReceivedEchoActivity(this, EventArgs.Empty);
 
-            Log.DebugFormat("Activity call back received at {0:yyyy-MM-dd HH:mm:ss.000}", DateTime.UtcNow);
+            Log.DebugFormat("Echo activity call back received at {0:yyyy-MM-dd HH:mm:ss.000}", DateTime.UtcNow);
         }
 
         #endregion
