@@ -103,12 +103,7 @@ namespace AlexaDo
         private void Browser_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (e.CloseReason != CloseReason.UserClosing)
-            {
-                if ((object)m_authenticationManager != null)
-                    m_authenticationManager.Dispose();
-
                 return;
-            }
 
             // When user selects to close application, just hide window
             e.Cancel = true;

@@ -22,7 +22,7 @@
           alexa simon says turn on security quietly
           alexa simon says silently set the security system
           
-        ToDo: Update parameters with your myfrontpoint.com credentials
+        TODO: Update parameters with your myfrontpoint.com credentials
       ]]>
     </notes>
   </command>
@@ -48,7 +48,7 @@
           alexa simon says turn on security quietly
           alexa simon says silently set the security system
           
-        ToDo: Update parameters with your myfrontpoint.com credentials
+        TODO: Update parameters with your myfrontpoint.com credentials
         Note: It is recommended to add a personal password so that not anyone can walk in
               and disarm your system. You can do this by adding the password as a required
               key pharase. For example, say your password is Picard09, you would update

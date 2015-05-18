@@ -3,6 +3,12 @@
   <Product Id="*" Name="AlexaDo" Language="1033" Version="!(bind.FileVersion.AlexaDo.exe)" Manufacturer="J. Ritchie Carroll" UpgradeCode="8cff82ac-af1b-491d-a4d5-045c639aa567">
     <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
 
+    <?if $(var.Platform) = x64 ?>
+      <?define ApplicationDescription = "AlexaDo Amazon Echo Invocation Plug-in Application (64-bit)" ?>
+    <?else ?>
+      <?define ApplicationDescription = "AlexaDo Amazon Echo Invocation Plug-in Application (32-bit)" ?>
+    <?endif ?>
+
     <PropertyRef Id="NETFRAMEWORK45"/>
 
     <Condition Message='This setup requires Microsoft .NET Framework 4.5 or greater - this will need to be installed before installation can continue.'>
@@ -13,15 +19,29 @@
     <MediaTemplate EmbedCab="yes" />
 
     <Feature Id="AllProducts" Title="All Products" Level="1" Display="expand" ConfigurableDirectory="INSTALLFOLDER" Description="All AlexDo Components">
-      <Feature Id="AlexaDoFeature" Title="AlexaDo Echo Monitor" Description="AlexaDo Amazon Echo Invocation Plug-in Application">
+      <Feature Id="AlexaDoFeature" Title="AlexaDo Echo Monitor" Description="$(var.ApplicationDescription)">
         <ComponentRef Id="AlexaDo" />
       </Feature>
 
       <ComponentGroupRef Id="Dependencies" />
       <ComponentRef Id="Cleanup" />
     </Feature>
-  </Product>
 
+    <!-- User Interface -->
+    <UIRef Id="WixUI_FeatureTree" />
+    <UIRef Id="WixUI_ErrorProgressText" />
+    <WixVariable Id="WixUIBannerBmp" Value="$(var.ProjectDir)\AlexaDoSetupBanner.bmp" />
+    <WixVariable Id="WixUIDialogBmp" Value="$(var.ProjectDir)\AlexaDoSetupDialog.bmp" />
+    <WixVariable Id="WixUILicenseRtf" Value="$(var.ProjectDir)\InstallLicense.rtf" />
+
+    <Icon Id="AlexaDo.ico.exe" SourceFile="$(var.AlexaDo.TargetPath)" />
+
+    <!-- Add/Remove Programs Icon -->
+    <Property Id="ARPPRODUCTICON" Value="AlexaDo.ico.exe" />
+    <Property Id="ARPCOMMENTS">$(var.ApplicationDescription)</Property>
+    <Property Id="ARPURLINFOABOUT">https://github.com/ritchiecarroll/AlexaDo</Property>
+  </Product>
+  
   <Fragment>
     <Directory Id="TARGETDIR" Name="SourceDir">
       <?if $(var.Platform) = x64 ?>

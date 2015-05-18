@@ -45,7 +45,7 @@
           alexa email me bring an umbrella to work tomorrow stop
           alexa simon says remind me valentines day is next tuesday
         
-        ToDo: Update parameters with your e-mail address and credentials
+        TODO: Update parameters with your e-mail address and credentials
         Note: mailsend needs to be in path or AlexaDo folder, see: http://github.com/muquit/mailsend.
       ]]>
     </notes>

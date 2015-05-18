@@ -29,6 +29,12 @@ namespace AlexaDo
             if (disposing && (components != null))
             {
                 components.Dispose();
+
+                if ((object)m_authenticationManager != null)
+                    m_authenticationManager.Dispose();
+
+                if ((object)m_activityProcessor != null)
+                    m_activityProcessor.Dispose();
             }
             base.Dispose(disposing);
         }

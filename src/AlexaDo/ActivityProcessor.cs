@@ -204,9 +204,7 @@ namespace AlexaDo
                                 // Only process activities that have occurred recently - note that
                                 // if local clock is way off, things may never get processed
                                 if (Math.Abs((DateTime.UtcNow - activity.Time).TotalSeconds) <= Settings.TimeTolerance)
-                                {
                                     ProcessActivity(activity);
-                                }
                             }
 
                             // Possible optimization: if activities are always time-sorted, you can break out of loop early...
@@ -264,12 +262,30 @@ namespace AlexaDo
             if (string.IsNullOrWhiteSpace(command))
                 return;
 
-            if (command.StartsWith(Settings.StartKeyWord, StringComparison.OrdinalIgnoreCase))
-                ProcessActivity(new EchoActivity("SUCCESS", DateTime.UtcNow, "TestActivity", command));
-            else
-                ProcessActivity(new EchoActivity("SYSTEM_ABANDONED", DateTime.UtcNow, "TestActivity", command));
+            // Make sure to only process one activity query at a time - even if testing
+            if (Thread.VolatileRead(ref m_processing) != 0)
+                return;
+
+            try
+            {
+                Interlocked.Exchange(ref m_processing, 1);
+
+                if (command.StartsWith(Settings.StartKeyWord, StringComparison.OrdinalIgnoreCase))
+                    ProcessActivity(new EchoActivity("SUCCESS", DateTime.UtcNow, "TestActivity", command));
+                else
+                    ProcessActivity(new EchoActivity("SYSTEM_ABANDONED", DateTime.UtcNow, "TestActivity", command));
+            }
+            catch (Exception ex)
+            {
+                ShowNotification(string.Format("Failure while processing test activity: {0}", ex.Message), ToolTipIcon.Error);
+            }
+            finally
+            {
+                Interlocked.Exchange(ref m_processing, 0);
+            }
         }
 
+        // Process an activity
         private void ProcessActivity(EchoActivity activity)
         {
             bool processCommand = false;
