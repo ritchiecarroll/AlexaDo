@@ -44,7 +44,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AlexaDoPluginBase.cs" />
-    <Compile Include="PluginCommands.cs" />
+    <Compile Include="Commands\Action.cs" />
+    <Compile Include="Commands\KeyPhrase.cs" />
+    <Compile Include="Commands\MatchStyle.cs" />
+    <Compile Include="Commands\Parameters.cs" />
+    <Compile Include="Commands\PluginCommands.cs" />
+    <Compile Include="Commands\ResponseType.cs" />
+    <Compile Include="Commands\Trigger.cs" />
     <Compile Include="EchoActivity.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

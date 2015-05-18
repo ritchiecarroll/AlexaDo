@@ -16,7 +16,7 @@ using System;
 namespace AlexaDoPlugin
 {
     /// <summary>
-    /// Defines a data structure for relevant Echo activity data .
+    /// Defines a data structure for relevant Echo activity data.
     /// </summary>
     [Serializable]
     public struct EchoActivity : IEquatable<EchoActivity>, IComparable<EchoActivity>
