@@ -1,41 +1,42 @@
 ﻿//******************************************************************************************************
-//  Action.cs - Gbtc
+//  Notes.cs - Gbtc
 //
 //  Copyright © 2015, James Ritchie Carroll.  All Rights Reserved.
 //  MIT License (MIT)
 //
 //  Code Modification History:
 //  ----------------------------------------------------------------------------------------------------
-//  05/15/2015 - J. Ritchie Carroll
+//  05/18/2015 - J. Ritchie Carroll
 //       Generated original version of source code.
 //
 //******************************************************************************************************
 
+using System.Xml.Linq;
 using System.Xml.Serialization;
 
 namespace AlexaDoPlugin.Commands
 {
     /// <summary>
-    /// Represents the action to perform for a <see cref="Command"/>.
+    /// Represents any possible notes associated with a <see cref="Command"/>.
     /// </summary>
-    public class Action
+    public class Notes
     {
-        /// <summary>
-        /// Assembly name that contains the action to perform.
-        /// </summary>
-        [XmlElement("assemblyName")]
-        public string AssemblyName;
+        private string m_value;
 
         /// <summary>
-        /// Type name of the action to perform.
+        /// Notes value, typically a CDATA value.
         /// </summary>
-        [XmlElement("typeName")]
-        public string TypeName;
-
-        /// <summary>
-        /// Parameters to use for the action to perform.
-        /// </summary>
-        [XmlElement("parameters")]
-        public Parameters Parameters;
+        [XmlText]
+        public string Value
+        {
+            get
+            {
+                return m_value;
+            }
+            set
+            {
+                m_value = XElement.Parse(value).Value;
+            }
+        }
     }
 }

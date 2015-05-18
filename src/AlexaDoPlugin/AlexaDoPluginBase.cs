@@ -11,11 +11,16 @@
 //
 //******************************************************************************************************
 
+using System;
+using AlexaDoPlugin.Commands;
 using log4net;
 
 namespace AlexaDoPlugin
 {
-    public class AlexaDoPluginBase
+    /// <summary>
+    /// Defines base class for AlexaDo plug-ins.
+    /// </summary>
+    public abstract class AlexaDoPluginBase : IDisposable
     {
         #region [ Members ]
 
@@ -30,15 +35,21 @@ namespace AlexaDoPlugin
         // Fields
 
         /// <summary>
-        /// log4net log writer.
+        /// Log writer.
         /// </summary>
         protected readonly ILog Log;
+
+        private Command m_command;
+        private bool m_disposed;
 
         #endregion
 
         #region [ Constructors ]
 
-        public AlexaDoPluginBase()
+        /// <summary>
+        /// Creates a new <see cref="AlexaDoPluginBase"/> class instance.
+        /// </summary>
+        protected AlexaDoPluginBase()
         {
             // Get a logger specific to derived plug-in
             Log = LogManager.GetLogger(GetType());
@@ -49,13 +60,61 @@ namespace AlexaDoPlugin
 
         #region [ Properties ]
 
+        /// <summary>
+        /// Gets associated <see cref="AlexaDoPlugin.Commands.Command"/> definition.
+        /// </summary>
+        public Command Command
+        {
+            get
+            {
+                return m_command;
+            }
+            internal set
+            {
+                m_command = value;
+            }
+        }
+
         #endregion
 
         #region [ Methods ]
 
-        #endregion
+        /// <summary>
+        /// Releases all the resources used by the <see cref="AlexaDoPluginBase"/> object.
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
 
-        #region [ Operators ]
+        /// <summary>
+        /// Releases the unmanaged resources used by the <see cref="AlexaDoPluginBase"/> object and optionally releases the managed resources.
+        /// </summary>
+        /// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!m_disposed)
+            {
+                try
+                {
+                    if (disposing)
+                        Log.DebugFormat("{0} plug-instance is disposing", GetType().FullName);
+                }
+                finally
+                {
+                    m_disposed = true;  // Prevent duplicate dispose.
+                }
+            }
+        }
+
+        /// <summary>
+        /// Plug-in method to process Echo activity.
+        /// </summary>
+        /// <param name="activity">Echo activity to process.</param>
+        /// <param name="failureReason">Reason for any failure.</param>
+        /// <returns><c>true</c> if activity was successfully processed; otherwise, <c>false</c>.</returns>
+        public abstract bool ProcessActivity(EchoActivity activity, out string failureReason);
 
         #endregion
 

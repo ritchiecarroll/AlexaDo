@@ -21,6 +21,7 @@
     <Feature Id="AllProducts" Title="All Products" Level="1" Display="expand" ConfigurableDirectory="INSTALLFOLDER" Description="All AlexDo Components">
       <Feature Id="AlexaDoFeature" Title="AlexaDo Echo Monitor" Description="$(var.ApplicationDescription)">
         <ComponentRef Id="AlexaDo" />
+        <ComponentRef Id="AlexaDoConfig" />
       </Feature>
 
       <ComponentGroupRef Id="Dependencies" />
@@ -67,6 +68,10 @@
       <!-- Applications -->
       <Component Id="AlexaDo">
         <File Id="AlexaDo.exe" Name="$(var.AlexaDo.TargetFileName)" Source="$(var.AlexaDo.TargetPath)" />
+      </Component>
+
+      <Component Id="AlexaDoConfig">
+        <File Id="AlexaDo.exe.config" Name="$(var.AlexaDo.TargetFileName).config" Source="$(var.AlexaDo.TargetPath).config" />
       </Component>
 
       <!-- Cleanup -->

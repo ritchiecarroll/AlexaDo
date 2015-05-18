@@ -18,6 +18,7 @@ using System.Drawing;
 using System.Linq;
 using System.Speech.Synthesis;
 using System.Windows.Forms;
+using AlexaDoPlugin;
 using GSF.Configuration;
 using log4net;
 
@@ -280,14 +281,10 @@ namespace AlexaDo
             if (!m_activityProcessor.ProcessActivities())
                 Reauthenticate(false);
 
-            // To allow update operation to be run from other threads, queue call for message loop processing if needed
-            if (InvokeRequired)
-                BeginInvoke((Action)UpdateTaskbarTooltip);
-            else
-                UpdateTaskbarTooltip();
+            BeginInvoke((Action)UpdateTaskbarTooltip);
         }
 
-        private void UpdateTaskbarTooltip()
+        internal void UpdateTaskbarTooltip()
         {
             if ((object)m_activityProcessor == null)
                 return;
@@ -302,6 +299,13 @@ namespace AlexaDo
 
         private void Reauthenticate(bool requestCredentials)
         {
+            // To allow operation to be run from other threads, queue call for message loop processing if needed
+            if (InvokeRequired)
+            {
+                BeginInvoke((Action<bool>)Reauthenticate, requestCredentials);
+                return;
+            }
+
             QueryTimer.Enabled = false;
 
             if ((object)m_authenticationManager != null)

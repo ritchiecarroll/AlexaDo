@@ -1,5 +1,5 @@
 ﻿//******************************************************************************************************
-//  EchoMonitor.Authenticate.Designer.cs - Gbtc
+//  Settings.cs - Gbtc
 //
 //  Copyright © 2015, James Ritchie Carroll.  All Rights Reserved.
 //  MIT License (MIT)
@@ -14,7 +14,7 @@
 using GSF;
 using GSF.Configuration;
 
-namespace AlexaDo
+namespace AlexaDoPlugin
 {
     /// <summary>
     /// Defines configured application settings.

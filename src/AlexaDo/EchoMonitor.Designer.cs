@@ -79,7 +79,7 @@ namespace AlexaDo
             this.BrowserControl.MinimumSize = new System.Drawing.Size(20, 20);
             this.BrowserControl.Name = "BrowserControl";
             this.BrowserControl.Size = new System.Drawing.Size(784, 515);
-            this.BrowserControl.TabIndex = 0;
+            this.BrowserControl.TabIndex = 2;
             this.BrowserControl.DocumentCompleted += new System.Windows.Forms.WebBrowserDocumentCompletedEventHandler(this.BrowserControl_DocumentCompleted);
             this.BrowserControl.Navigating += new System.Windows.Forms.WebBrowserNavigatingEventHandler(this.BrowserControl_Navigating);
             this.BrowserControl.ProgressChanged += new System.Windows.Forms.WebBrowserProgressChangedEventHandler(this.BrowserControl_ProgressChanged);
@@ -101,7 +101,7 @@ namespace AlexaDo
             // 
             this.URLFeedbackLabel.AutoToolTip = true;
             this.URLFeedbackLabel.Name = "URLFeedbackLabel";
-            this.URLFeedbackLabel.Size = new System.Drawing.Size(588, 19);
+            this.URLFeedbackLabel.Size = new System.Drawing.Size(557, 19);
             this.URLFeedbackLabel.Spring = true;
             this.URLFeedbackLabel.Text = "URL Feeback";
             this.URLFeedbackLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -112,7 +112,7 @@ namespace AlexaDo
             this.TTSVoiceLabel.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
             this.TTSVoiceLabel.Name = "TTSVoiceLabel";
             this.TTSVoiceLabel.Size = new System.Drawing.Size(66, 19);
-            this.TTSVoiceLabel.Text = "TTS Voice:";
+            this.TTSVoiceLabel.Text = "TTS &Voice:";
             // 
             // VoiceDropDown
             // 
@@ -143,12 +143,12 @@ namespace AlexaDo
             this.StatusStrip.Name = "StatusStrip";
             this.StatusStrip.Size = new System.Drawing.Size(784, 22);
             this.StatusStrip.SizingGrip = false;
-            this.StatusStrip.TabIndex = 2;
+            this.StatusStrip.TabIndex = 0;
             // 
             // StatusLabel
             // 
             this.StatusLabel.Name = "StatusLabel";
-            this.StatusLabel.Size = new System.Drawing.Size(624, 17);
+            this.StatusLabel.Size = new System.Drawing.Size(769, 17);
             this.StatusLabel.Spring = true;
             this.StatusLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 

@@ -1,12 +1,12 @@
 ﻿//******************************************************************************************************
-//  Action.cs - Gbtc
+//  Response.cs - Gbtc
 //
 //  Copyright © 2015, James Ritchie Carroll.  All Rights Reserved.
 //  MIT License (MIT)
 //
 //  Code Modification History:
 //  ----------------------------------------------------------------------------------------------------
-//  05/15/2015 - J. Ritchie Carroll
+//  05/18/2015 - J. Ritchie Carroll
 //       Generated original version of source code.
 //
 //******************************************************************************************************
@@ -16,26 +16,20 @@ using System.Xml.Serialization;
 namespace AlexaDoPlugin.Commands
 {
     /// <summary>
-    /// Represents the action to perform for a <see cref="Command"/>.
+    /// Represents the response to return, if any, when a <see cref="Command"/> succeeds or fails.
     /// </summary>
-    public class Action
+    public class Response
     {
         /// <summary>
-        /// Assembly name that contains the action to perform.
+        /// Success response, if any.
         /// </summary>
-        [XmlElement("assemblyName")]
-        public string AssemblyName;
+        [XmlElement("succeeded", IsNullable = true)]
+        public ResponseMessage Succeeded;
 
         /// <summary>
-        /// Type name of the action to perform.
+        /// Failure response, if any.
         /// </summary>
-        [XmlElement("typeName")]
-        public string TypeName;
-
-        /// <summary>
-        /// Parameters to use for the action to perform.
-        /// </summary>
-        [XmlElement("parameters")]
-        public Parameters Parameters;
+        [XmlElement("failed", IsNullable = true)]
+        public ResponseMessage Failed;
     }
 }

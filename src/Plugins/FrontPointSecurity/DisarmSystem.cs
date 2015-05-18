@@ -18,5 +18,10 @@ namespace FrontPointSecurity
     public class DisarmSystem : AlexaDoPluginBase
     {
         // What we really need here is an API from Alarm.com, in-lieu of that, here you go...
+
+        public override bool ProcessActivity(EchoActivity activity, out string failureReason)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

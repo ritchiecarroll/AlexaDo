@@ -16,6 +16,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
+using AlexaDoPlugin;
 using GSF;
 using GSF.Configuration;
 using GSF.Threading;
@@ -302,6 +303,9 @@ namespace AlexaDo
             {
                 m_echoMonitor.ShowNotification(string.Format("Failure during authentication attempt: {0}", ex.Message), ToolTipIcon.Error);
             }
+
+            // Update task bar icon tool tip with current authentication state
+            m_echoMonitor.UpdateTaskbarTooltip();
         }
 
         // Establish Echo activity monitoring - try web socket attachment, if this fails, fall back on timer query

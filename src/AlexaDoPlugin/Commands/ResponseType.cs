@@ -14,7 +14,7 @@
 namespace AlexaDoPlugin.Commands
 {
     /// <summary>
-    /// Enumeration of response types.
+    /// Enumeration of possible response types in a <see cref="ResponseMessage"/>.
     /// </summary>
     public enum ResponseType
     {
@@ -22,13 +22,13 @@ namespace AlexaDoPlugin.Commands
         /// Text-to-speech response.
         /// </summary>
         Tts,
-        tts = Tts,
         TTS = Tts,
+        tts = Tts,
         /// <summary>
         /// Wave file response.
         /// </summary>
         Wav,
-        wav = Wav,
-        WAV = Wav
+        WAV = Wav,
+        wav = Wav
     }
 }

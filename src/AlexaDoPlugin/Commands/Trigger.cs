@@ -17,6 +17,12 @@ using GSF;
 
 namespace AlexaDoPlugin.Commands
 {
+    // Helpful definitions:
+
+    //     Trigger: A set of key phrases and a match style that will trigger a command
+    //  Key Phrase: List of words that will trigger a command
+    // Match Style: How to match words of a key phrase in order to trigger a command
+
     /// <summary>
     /// Represents the possible key phrases and match style that will trigger a <see cref="Command"/>.
     /// </summary>
@@ -24,7 +30,7 @@ namespace AlexaDoPlugin.Commands
     public class Trigger
     {
         /// <summary>
-        /// Array of key phrases that will trigger a command.
+        /// Array of possible key phrases that will trigger a command.
         /// </summary>
         [XmlIgnore]
         public KeyPhrase[] KeyPhrases;

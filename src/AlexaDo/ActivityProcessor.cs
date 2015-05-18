@@ -40,6 +40,7 @@ namespace AlexaDo
 
         // Fields
         private readonly EchoMonitor m_echoMonitor;
+        private readonly PluginManager m_pluginManager;
         private HashSet<EchoActivity> m_processedActivities;
         private long m_totalQueries;
         private int m_processing;
@@ -56,37 +57,7 @@ namespace AlexaDo
         public ActivityProcessor(EchoMonitor echoMonitor)
         {
             m_echoMonitor = echoMonitor;
-        }
-
-        /// <summary>
-        /// Releases all the resources used by the <see cref="ActivityProcessor"/> object.
-        /// </summary>
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        /// <summary>
-        /// Releases the unmanaged resources used by the <see cref="ActivityProcessor"/> object and optionally releases the managed resources.
-        /// </summary>
-        /// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.</param>
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!m_disposed)
-            {
-                try
-                {
-                    if (disposing)
-                    {
-                        // TODO: Expect to dispose AlexaDo Plug-in Manager once developed...
-                    }
-                }
-                finally
-                {
-                    m_disposed = true;  // Prevent duplicate dispose.
-                }
-            }
+            m_pluginManager = new PluginManager();
         }
 
         #endregion
@@ -111,6 +82,38 @@ namespace AlexaDo
         #endregion
 
         #region [ Methods ]
+
+        /// <summary>
+        /// Releases all the resources used by the <see cref="ActivityProcessor"/> object.
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Releases the unmanaged resources used by the <see cref="ActivityProcessor"/> object and optionally releases the managed resources.
+        /// </summary>
+        /// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!m_disposed)
+            {
+                try
+                {
+                    if (disposing)
+                    {
+                        if ((object)m_pluginManager != null)
+                            m_pluginManager.Dispose();
+                    }
+                }
+                finally
+                {
+                    m_disposed = true;  // Prevent duplicate dispose.
+                }
+            }
+        }
 
         /// <summary>
         /// Processes current activities.
@@ -318,9 +321,8 @@ namespace AlexaDo
                 if (Settings.TTSFeedbackEnabled)
                     TTSEngine.Speak("Processing command: " + activity.Command);
 #endif
-                // TODO: Process plug-ins
-
-                Log.InfoFormat("Processed Echo activity [{0}]: {1} \"{2}\"", activity.Status, activity.ID, activity.Command);
+                int processed = m_pluginManager.ProcessActivity(activity);
+                Log.InfoFormat("{0:N0} plug-in{1} processed Echo activity [{2}]: {3} \"{4}\"", processed, processed == 1 ? "" : "s", activity.Status, activity.ID, activity.Command);
             }
         }
 

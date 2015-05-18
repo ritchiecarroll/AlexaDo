@@ -19,5 +19,10 @@ namespace AppLauncher
     {
         // Make Google Now speak from Chrome:
         // https://www.google.com/search?gs_ivs=1&q=when+was+george+washington+born
+
+        public override bool ProcessActivity(EchoActivity activity, out string failureReason)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }
