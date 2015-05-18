@@ -52,13 +52,14 @@ namespace AlexaDo
             this.QueryTimer = new System.Windows.Forms.Timer(this.components);
             this.StatusStrip = new System.Windows.Forms.StatusStrip();
             this.StatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
+            this.TestCommandButton = new System.Windows.Forms.ToolStripSplitButton();
             this.NotifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
             this.NotifyIconContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.ShowMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.HideMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            this.Separator1 = new System.Windows.Forms.ToolStripSeparator();
             this.ReauthenticateMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
+            this.Separator2 = new System.Windows.Forms.ToolStripSeparator();
             this.ExitMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.URLFeebackStrip.SuspendLayout();
             this.StatusStrip.SuspendLayout();
@@ -130,7 +131,8 @@ namespace AlexaDo
             // 
             this.StatusStrip.Dock = System.Windows.Forms.DockStyle.Top;
             this.StatusStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.StatusLabel});
+            this.StatusLabel,
+            this.TestCommandButton});
             this.StatusStrip.Location = new System.Drawing.Point(0, 0);
             this.StatusStrip.Name = "StatusStrip";
             this.StatusStrip.Size = new System.Drawing.Size(784, 22);
@@ -140,9 +142,22 @@ namespace AlexaDo
             // StatusLabel
             // 
             this.StatusLabel.Name = "StatusLabel";
-            this.StatusLabel.Size = new System.Drawing.Size(769, 17);
+            this.StatusLabel.Size = new System.Drawing.Size(624, 17);
             this.StatusLabel.Spring = true;
             this.StatusLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // TestCommandButton
+            // 
+            this.TestCommandButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.TestCommandButton.Enabled = false;
+            this.TestCommandButton.Image = ((System.Drawing.Image)(resources.GetObject("TestCommandButton.Image")));
+            this.TestCommandButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.TestCommandButton.Name = "TestCommandButton";
+            this.TestCommandButton.Size = new System.Drawing.Size(114, 20);
+            this.TestCommandButton.Text = "&Test Command...";
+            this.TestCommandButton.ToolTipText = "Test Command...";
+            this.TestCommandButton.Visible = false;
+            this.TestCommandButton.ButtonClick += new System.EventHandler(this.TestCommandButton_ButtonClick);
             // 
             // NotifyIcon
             // 
@@ -160,9 +175,9 @@ namespace AlexaDo
             this.NotifyIconContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.ShowMenuItem,
             this.HideMenuItem,
-            this.toolStripSeparator1,
+            this.Separator1,
             this.ReauthenticateMenuItem,
-            this.toolStripSeparator2,
+            this.Separator2,
             this.ExitMenuItem});
             this.NotifyIconContextMenu.Name = "NotifyIconContextMenu";
             this.NotifyIconContextMenu.Size = new System.Drawing.Size(154, 104);
@@ -182,10 +197,10 @@ namespace AlexaDo
             this.HideMenuItem.Text = "Hide";
             this.HideMenuItem.Click += new System.EventHandler(this.HideMenuItem_Click);
             // 
-            // toolStripSeparator1
+            // Separator1
             // 
-            this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(150, 6);
+            this.Separator1.Name = "Separator1";
+            this.Separator1.Size = new System.Drawing.Size(150, 6);
             // 
             // ReauthenticateMenuItem
             // 
@@ -194,10 +209,10 @@ namespace AlexaDo
             this.ReauthenticateMenuItem.Text = "Reauthenticate";
             this.ReauthenticateMenuItem.Click += new System.EventHandler(this.ReauthenticateMenuItem_Click);
             // 
-            // toolStripSeparator2
+            // Separator2
             // 
-            this.toolStripSeparator2.Name = "toolStripSeparator2";
-            this.toolStripSeparator2.Size = new System.Drawing.Size(150, 6);
+            this.Separator2.Name = "Separator2";
+            this.Separator2.Size = new System.Drawing.Size(150, 6);
             // 
             // ExitMenuItem
             // 
@@ -243,13 +258,14 @@ namespace AlexaDo
         private System.Windows.Forms.ContextMenuStrip NotifyIconContextMenu;
         private System.Windows.Forms.ToolStripMenuItem ShowMenuItem;
         private System.Windows.Forms.ToolStripMenuItem HideMenuItem;
-        private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
+        private System.Windows.Forms.ToolStripSeparator Separator1;
         private System.Windows.Forms.ToolStripMenuItem ReauthenticateMenuItem;
-        private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
+        private System.Windows.Forms.ToolStripSeparator Separator2;
         private System.Windows.Forms.ToolStripMenuItem ExitMenuItem;
         private System.Windows.Forms.ToolStripStatusLabel TTSVoiceLabel;
         internal System.Windows.Forms.Timer QueryTimer;
         internal System.Windows.Forms.WebBrowser BrowserControl;
+        private System.Windows.Forms.ToolStripSplitButton TestCommandButton;
     }
 }
 

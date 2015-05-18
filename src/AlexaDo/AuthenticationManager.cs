@@ -28,8 +28,8 @@ namespace AlexaDo
     /// </summary>
     /// <threading>
     /// This class is dependent on the main form for an active WebBrowser control and feedback
-    /// processing, as such methods will run on the main thread as invoked from primary message
-    /// loop. As a result this class is not safe for multi-threaded access.
+    /// processing, this means that methods will run on the main thread as invoked from primary
+    /// message loop; as a result this class is not safe for multi-threaded access.
     /// </threading>
     public class AuthenticationManager : IDisposable
     {
@@ -233,6 +233,7 @@ namespace AlexaDo
                         break;
 
                     // Arrival at echo.amazon.com indicates successful authentication
+                    // TODO: Check for more reliable way to validate authentication - URL's could change in the future...
                     if ((object)doc.Url != null && doc.Url.Host.Equals("echo.amazon.com", StringComparison.OrdinalIgnoreCase))
                     {
                         if (manualLogin)
@@ -264,8 +265,8 @@ namespace AlexaDo
 #if !DEBUG
                         m_echoMonitor.HideWindow();
 #endif
-                        // Establish dynamic notification if possible, this prevents the need to poll
-                        EstablishWebSocketListener();
+                        // Establish echo activity monitoring
+                        EstablishEchoActivityMonitor();
                     }
                     else
                     {
@@ -304,7 +305,7 @@ namespace AlexaDo
         }
 
         // Establish Echo activity monitoring - try web socket attachment, if this fails, fall back on timer query
-        private void EstablishWebSocketListener()
+        private void EstablishEchoActivityMonitor()
         {
             // Attempt to piggy-back Amazon Websockets for dynamic response - we do this by updating the current page with script to
             // attach to the running Echo communications stack, see: http://www.piettes.com/echo/viewtopic.php?f=3&t=10

@@ -30,6 +30,10 @@ namespace AlexaDo
     {
         #region [ Members ]
 
+        // Constants
+        internal const ToolTipIcon DefaultToolTipIcon = ToolTipIcon.None;
+        internal const int DefaultToolTipTimeout = 1500;
+
         // Fields
         private AuthenticationManager m_authenticationManager;
         private ActivityProcessor m_activityProcessor;
@@ -72,7 +76,11 @@ namespace AlexaDo
             m_initialDisplay = true;
             m_initialSize = Size;
             m_initialLocation = Location;
-#if !DEBUG
+#if DEBUG
+            TestCommandButton.Visible = true;
+            TestCommandButton.Enabled = true;
+            StatusLabel.BorderSides = ToolStripStatusLabelBorderSides.Right;
+#else
             WindowState = FormWindowState.Minimized;
 #endif
         }
@@ -153,6 +161,18 @@ namespace AlexaDo
             TryProcessActivities();
         }
 
+        private void TestCommandButton_ButtonClick(object sender, EventArgs e)
+        {
+            if ((object)m_activityProcessor == null)
+                return;
+
+            using (TestCommand commandForm = new TestCommand())
+            {
+                if (commandForm.ShowDialog(this) == DialogResult.OK)
+                    m_activityProcessor.TestActivity(commandForm.CommandText.Text);
+            }
+        }
+
         private void NotifyIcon_MouseClick(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left)
@@ -204,7 +224,7 @@ namespace AlexaDo
                 base.WndProc(ref m);
         }
 
-        internal void ShowNotification(string message, ToolTipIcon icon = ToolTipIcon.None, int timeout = 1500, bool forceDisplay = false)
+        internal void ShowNotification(string message, ToolTipIcon icon = DefaultToolTipIcon, int timeout = DefaultToolTipTimeout, bool forceDisplay = false)
         {
             NotifyIcon.BalloonTipText = message;
             NotifyIcon.BalloonTipIcon = icon;
@@ -277,9 +297,12 @@ namespace AlexaDo
             if ((object)m_activityProcessor == null)
                 return;
 
-            NotifyIcon.Text =
-                string.Format("{0} - {1}", NotifyIcon.Tag, Settings.Authenticated ?
-                string.Format("Authenticated, {0:N0} queries", m_activityProcessor.TotalQueries) : "Not Authenticated");
+            long queries = m_activityProcessor.TotalQueries;
+
+            NotifyIcon.Text = string.Format("{0} - {1}", NotifyIcon.Tag, Settings.Authenticated ?
+                string.Format("Authenticated, {0:N0} {1}",
+                    queries, queries == 1 ? "query" : "queries") :
+                "Not Authenticated");
         }
 
         private void Reauthenticate(bool requestCredentials)

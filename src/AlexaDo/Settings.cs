@@ -45,7 +45,6 @@ namespace AlexaDo
         private const string DefaultStartKeyWord = "Simon Says";
         private const string DefaultEndKeyWord = "Stop";
 
-
         // Static Fields
         private readonly static string s_userAgent;
         private readonly static int s_queryInterval;

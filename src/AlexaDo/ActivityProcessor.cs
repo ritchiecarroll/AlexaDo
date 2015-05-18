@@ -79,7 +79,7 @@ namespace AlexaDo
                 {
                     if (disposing)
                     {
-                        // TODO: Expect to dispose AlexaDo Plugin Manager once developed...
+                        // TODO: Expect to dispose AlexaDo Plug-in Manager once developed...
                     }
                 }
                 finally
@@ -137,13 +137,13 @@ namespace AlexaDo
                     UpdateStatus("Downloading Echo activity data...");
 
                     string processedCacheFileName = FilePath.GetAbsolutePath(ProcessedActivitiesCacheFileName);
-                    bool processCacheUpdated = false;
+                    bool processedCacheUpdated = false;
 
                     // Deserialize processed activity cache from last run, if any
                     if ((object)m_processedActivities == null)
                     {
                         m_processedActivities = DeserializeProcessedActivitiesCache(processedCacheFileName);
-                        processCacheUpdated = true;
+                        processedCacheUpdated = true;
                     }
 
                     string activities;
@@ -199,51 +199,20 @@ namespace AlexaDo
                             {
                                 // Mark activity as processed
                                 m_processedActivities.Add(activity);
-                                processCacheUpdated = true;
+                                processedCacheUpdated = true;
 
                                 // Only process activities that have occurred recently - note that
                                 // if local clock is way off, things may never get processed
                                 if (Math.Abs((DateTime.UtcNow - activity.Time).TotalSeconds) <= Settings.TimeTolerance)
                                 {
-                                    bool processCommand = false;
-
-                                    // Check for commands ending with end key word, e.g, "Stop"
-                                    if (activity.Status.Equals("SYSTEM_ABANDONED", StringComparison.OrdinalIgnoreCase))
-                                    {
-                                        processCommand = true;
-
-                                        // Remove end key word from command, if it exists
-                                        if (activity.Command.StartsWith(Settings.EndKeyWord, StringComparison.OrdinalIgnoreCase))
-                                            activity.Command = activity.Command.Substring(activity.Command.Length - Settings.EndKeyWord.Length);
-                                    }
-
-                                    // Also check for commands beginning with key word, e.g., "Simon Says"
-                                    if (!processCommand &&
-                                        activity.Status.Equals("SUCCESS", StringComparison.OrdinalIgnoreCase) &&
-                                        activity.Command.StartsWith(Settings.StartKeyWord, StringComparison.OrdinalIgnoreCase))
-                                    {
-                                        processCommand = true;
-
-                                        // Remove key word from command
-                                        activity.Command = activity.Command.Substring(Settings.StartKeyWord.Length);
-                                    }
-
-                                    if (processCommand)
-                                    {
-                                        UpdateStatus("Processing Echo activity [{0}]: {1} \"{2}\"", activity.Status, activity.ID, activity.Command);
-#if DEBUG
-                                        if (Settings.TTSFeedbackEnabled)
-                                            TTSEngine.Speak("Processing command: " + activity.Command);
-#endif
-                                        // TODO: Process plug-ins
-                                    }
+                                    ProcessActivity(activity);
                                 }
                             }
 
                             // Possible optimization: if activities are always time-sorted, you can break out of loop early...
                         }
 
-                        // Maintain processed Echo activity dictionary size
+                        // Maintain processed Echo activity cache size
                         HashSet<EchoActivity> expiredActivities = new HashSet<EchoActivity>();
 
                         foreach (EchoActivity activity in m_processedActivities)
@@ -258,14 +227,14 @@ namespace AlexaDo
                         // Remove expired activities
                         if (expiredActivities.Count > 0)
                         {
-                            processCacheUpdated = true;
+                            processedCacheUpdated = true;
 
                             foreach (EchoActivity activity in expiredActivities)
                                 m_processedActivities.Remove(activity);
                         }
 
                         // Serialize processed activities cache for future runs
-                        if (processCacheUpdated)
+                        if (processedCacheUpdated)
                             SerializeProcessedActivitiesCache(processedCacheFileName);
 
                         UpdateStatus("Query {0:N0} processed {1:N0} Echo activities in {2}", ++m_totalQueries, encounteredActivities.Count, (DateTime.UtcNow.Ticks - startTime).ToElapsedTimeString(2));
@@ -284,6 +253,59 @@ namespace AlexaDo
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Tests an activity based on specified command.
+        /// </summary>
+        /// <param name="command">Command to trigger.</param>
+        public void TestActivity(string command)
+        {
+            if (string.IsNullOrWhiteSpace(command))
+                return;
+
+            if (command.StartsWith(Settings.StartKeyWord, StringComparison.OrdinalIgnoreCase))
+                ProcessActivity(new EchoActivity("SUCCESS", DateTime.UtcNow, "TestActivity", command));
+            else
+                ProcessActivity(new EchoActivity("SYSTEM_ABANDONED", DateTime.UtcNow, "TestActivity", command));
+        }
+
+        private void ProcessActivity(EchoActivity activity)
+        {
+            bool processCommand = false;
+
+            // Check for commands ending with end key word, e.g, "Stop"
+            if (activity.Status.Equals("SYSTEM_ABANDONED", StringComparison.OrdinalIgnoreCase))
+            {
+                processCommand = true;
+
+                // Remove end key word from command, if it exists
+                if (activity.Command.EndsWith(Settings.EndKeyWord, StringComparison.OrdinalIgnoreCase))
+                    activity.Command = activity.Command.Substring(0, activity.Command.Length - Settings.EndKeyWord.Length - 1);
+            }
+
+            // Also check for commands beginning with key word, e.g., "Simon Says"
+            if (!processCommand &&
+                activity.Status.Equals("SUCCESS", StringComparison.OrdinalIgnoreCase) &&
+                activity.Command.StartsWith(Settings.StartKeyWord, StringComparison.OrdinalIgnoreCase))
+            {
+                processCommand = true;
+
+                // Remove key word from command
+                activity.Command = activity.Command.Substring(Settings.StartKeyWord.Length + 1);
+            }
+
+            if (processCommand)
+            {
+                UpdateStatus("Processing Echo activity [{0}]: {1} \"{2}\"", activity.Status, activity.ID, activity.Command);
+#if DEBUG
+                if (Settings.TTSFeedbackEnabled)
+                    TTSEngine.Speak("Processing command: " + activity.Command);
+#endif
+                // TODO: Process plug-ins
+
+                Log.InfoFormat("Processed Echo activity [{0}]: {1} \"{2}\"", activity.Status, activity.ID, activity.Command);
+            }
         }
 
         private static string ParseEchoSpeechSummary(string description)
@@ -330,7 +352,7 @@ namespace AlexaDo
         }
 
         // Proxy notifications to UI message loop
-        private void ShowNotification(string message, ToolTipIcon icon = ToolTipIcon.None, int timeout = 1500, bool forceDisplay = false)
+        private void ShowNotification(string message, ToolTipIcon icon = EchoMonitor.DefaultToolTipIcon, int timeout = EchoMonitor.DefaultToolTipTimeout, bool forceDisplay = false)
         {
             m_echoMonitor.BeginInvoke((Action<string, ToolTipIcon, int, bool>)m_echoMonitor.ShowNotification, message, icon, timeout, forceDisplay);
         }
