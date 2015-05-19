@@ -26,7 +26,7 @@ namespace AlexaDoPlugin.Commands
         private string[] m_words;
 
         /// <summary>
-        /// Get array of words parsed from key phrase <see cref="m_value"/>.
+        /// Get array of words parsed from key phrase <see cref="Value"/>.
         /// </summary>
         public string[] Words
         {

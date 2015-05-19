@@ -218,7 +218,7 @@ namespace AlexaDo
                     {
                         // Make sure window is visible, we need user to login
                         m_echoMonitor.ShowWindow();
-                        m_echoMonitor.ShowNotification("Enter credentials to login to Amazon Echo...", ToolTipIcon.Info, forceDisplay: true);
+                        ShowNotification("Enter credentials to login to Amazon Echo...", ToolTipIcon.Info, forceDisplay: true);
                         manualLogin = true;
                     }
                     else
@@ -252,7 +252,7 @@ namespace AlexaDo
                             }
                             catch (Exception ex)
                             {
-                                m_echoMonitor.ShowNotification(string.Format("Failed to cache user credentials: {0}", ex.Message), ToolTipIcon.Error);
+                                ShowNotification(string.Format("Failed to cache user credentials: {0}", ex.Message), ToolTipIcon.Error);
                             }
                         }
                         else
@@ -262,7 +262,7 @@ namespace AlexaDo
 
                         Settings.Authenticated = true;
                         m_automatedLoginAttempts = 0;
-                        m_echoMonitor.ShowNotification("Successfully authenticated with Amazon Echo, starting activity monitoring cycle...", ToolTipIcon.Info);
+                        ShowNotification("Successfully authenticated with Amazon Echo, starting activity monitoring cycle...", ToolTipIcon.Info);
 #if !DEBUG
                         m_echoMonitor.HideWindow();
 #endif
@@ -280,7 +280,7 @@ namespace AlexaDo
                             if (m_automatedLoginAttempts < 5)
                             {
                                 // Retry automated authentication a few times, maybe data connection is not available at the moment
-                                m_echoMonitor.ShowNotification(string.Format("Failed to authenticate, trying again in {0:N0} seconds.", m_echoMonitor.QueryTimer.Interval / 1000), ToolTipIcon.Warning);
+                                ShowNotification(string.Format("Failed to authenticate, trying again in {0:N0} seconds.", m_echoMonitor.QueryTimer.Interval / 1000), ToolTipIcon.Warning);
 
                                 // Pause 5 seconds between automated authentication attempts
                                 DateTime waitTime = DateTime.UtcNow.AddSeconds(5.0);
@@ -301,7 +301,7 @@ namespace AlexaDo
             }
             catch (Exception ex)
             {
-                m_echoMonitor.ShowNotification(string.Format("Failure during authentication attempt: {0}", ex.Message), ToolTipIcon.Error);
+                ShowNotification(string.Format("Failure during authentication attempt: {0}", ex.Message), ToolTipIcon.Error);
             }
 
             // Update task bar icon tool tip with current authentication state
@@ -380,7 +380,7 @@ namespace AlexaDo
             {
                 Log.Debug("Failed to establish Websocket monitor for Echo activities.");
                 m_echoMonitor.QueryTimer.Enabled = true;
-                m_echoMonitor.ShowNotification("Using timer based query for activity polling, web socket is unavailable...", ToolTipIcon.Warning);
+                ShowNotification("Using timer based query for activity polling, web socket is unavailable...", ToolTipIcon.Warning);
             }
         }
 
@@ -452,7 +452,7 @@ namespace AlexaDo
             }
             catch (Exception ex)
             {
-                m_echoMonitor.ShowNotification(string.Format("Failed to clear cached user credentials: {0}", ex.Message), ToolTipIcon.Error);
+                ShowNotification(string.Format("Failed to clear cached user credentials: {0}", ex.Message), ToolTipIcon.Error);
             }
         }
 
@@ -501,6 +501,11 @@ namespace AlexaDo
                 Log.ErrorFormat("Failed to get post data, login credentials cannot be cached: {0}", ex.Message);
                 m_lastPostData.Clear();
             }
+        }
+
+        private void ShowNotification(string message, ToolTipIcon icon = Settings.DefaultToolTipIcon, int timeout = Settings.DefaultToolTipTimeout, bool forceDisplay = false)
+        {
+            m_echoMonitor.ShowNotification(message, icon, timeout, forceDisplay, Log);
         }
 
         #endregion

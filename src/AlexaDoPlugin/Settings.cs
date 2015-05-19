@@ -11,6 +11,7 @@
 //
 //******************************************************************************************************
 
+using System.Windows.Forms;
 using GSF;
 using GSF.Configuration;
 
@@ -37,6 +38,16 @@ namespace AlexaDoPlugin
         /// API parameters to query five Amazon Echo activities from history.
         /// </summary>
         public const string QueryTopFiveActivities = "?startTime=&endTime=&size=5&offset=-1";
+
+        /// <summary>
+        /// Default tool-tip icon for notifications.
+        /// </summary>
+        public const ToolTipIcon DefaultToolTipIcon = ToolTipIcon.None;
+
+        /// <summary>
+        /// Default tool-top timeout for notifications.
+        /// </summary>
+        public const int DefaultToolTipTimeout = 1500;
 
         // Default browser user-agent
         private const string DefaultUserAgent = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36";
@@ -156,6 +167,9 @@ namespace AlexaDoPlugin
         /// <summary>
         /// Gets or sets current TTS feedback enabled state.
         /// </summary>
+        /// <remarks>
+        /// This is set to <c>true</c> when "None" is selected as desired TTS voice.
+        /// </remarks>
         public static bool TTSFeedbackEnabled
         {
             get

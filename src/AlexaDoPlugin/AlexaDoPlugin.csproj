@@ -30,8 +30,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="GSF.Core, Version=2.0.239.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\GSF.Core.2.0.239\lib\net45\GSF.Core.dll</HintPath>
+    <Reference Include="GSF.Core, Version=2.1.62.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\GSF.Core.2.1.62-beta\lib\net45\GSF.Core.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="log4net, Version=1.2.13.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
@@ -43,8 +43,9 @@
     <Reference Include="System.Core" />
     <Reference Include="System.ServiceModel" />
     <Reference Include="System.Speech" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
-    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Xml.Serialization" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AlexaDoPluginBase.cs" />

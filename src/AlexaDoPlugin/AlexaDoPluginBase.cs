@@ -12,6 +12,7 @@
 //******************************************************************************************************
 
 using System;
+using System.Windows.Forms;
 using AlexaDoPlugin.Commands;
 using log4net;
 
@@ -24,14 +25,6 @@ namespace AlexaDoPlugin
     {
         #region [ Members ]
 
-        // Nested Types
-
-        // Constants
-
-        // Delegates
-
-        // Events
-
         // Fields
 
         /// <summary>
@@ -39,7 +32,11 @@ namespace AlexaDoPlugin
         /// </summary>
         protected readonly ILog Log;
 
+        private Action<string, ToolTipIcon, int, bool, ILog> m_showNotificationFunction;
+        private Func<Delegate, object[], IAsyncResult> m_beginInvokeFunction;
         private Command m_command;
+        private string m_parameters;
+        private bool m_enabled;
         private bool m_disposed;
 
         #endregion
@@ -72,6 +69,57 @@ namespace AlexaDoPlugin
             internal set
             {
                 m_command = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets parameters for this <see cref="AlexaDoPluginBase"/>.
+        /// </summary>
+        public virtual string Parameters
+        {
+            get
+            {
+                return m_parameters;
+            }
+            set
+            {
+                m_parameters = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets enabled state of this <see cref="AlexaDoPluginBase"/>.
+        /// </summary>
+        /// <remarks>
+        /// Derived classes can set enabled to state to <c>false</c> at any time to prevent plug-in from being invoked.
+        /// </remarks>
+        public bool Enabled
+        {
+            get
+            {
+                return m_enabled;
+            }
+            set
+            {
+                m_enabled = value;
+            }
+        }
+
+        // Assigns UI notification delegate
+        internal Action<string, ToolTipIcon, int, bool, ILog> ShowNotificationFunction
+        {
+            set
+            {
+                m_showNotificationFunction = value;
+            }
+        }
+
+        // Assigns message loop invoke delegate
+        internal Func<Delegate, object[], IAsyncResult> BeginInvokeFunction
+        {
+            set
+            {
+                m_beginInvokeFunction = value;
             }
         }
 
@@ -109,24 +157,74 @@ namespace AlexaDoPlugin
         }
 
         /// <summary>
+        /// Initialize plug-in adapter.
+        /// </summary>
+        /// <remarks>
+        /// Derived classes should set <see cref="Enabled"/> state to <c>true</c> upon successful initialization.
+        /// </remarks>
+        public virtual void Initialize()
+        {
+            Enabled = true;
+        }
+
+        /// <summary>
         /// Plug-in method to process Echo activity.
         /// </summary>
         /// <param name="activity">Echo activity to process.</param>
-        /// <param name="failureReason">Reason for any failure.</param>
+        /// <param name="query">Remaining command query, if any, when key phrase matched at start or end is removed.</param>
         /// <returns><c>true</c> if activity was successfully processed; otherwise, <c>false</c>.</returns>
-        public abstract bool ProcessActivity(EchoActivity activity, out string failureReason);
+        /// <remarks>
+        /// Implementor should throw an exception on failure - exception message text will be reported
+        /// through [reason] text as specified in any command/response/failure definition text.
+        /// </remarks>
+        public abstract void ProcessActivity(EchoActivity activity, string query);
 
-        #endregion
+        /// <summary>
+        /// Displays a UI notification from the tool-bar.
+        /// </summary>
+        /// <param name="message">Message to display.</param>
+        /// <param name="icon">Icon to use for the message.</param>
+        /// <param name="timeout">Message timeout.</param>
+        /// <param name="forceDisplay">Flag to force display.</param>
+        protected void ShowNotification(string message, ToolTipIcon icon = Settings.DefaultToolTipIcon, int timeout = Settings.DefaultToolTipTimeout, bool forceDisplay = false)
+        {
+            if ((object)m_showNotificationFunction != null)
+            {
+                // Notifications are always logged
+                m_showNotificationFunction(message, icon, timeout, forceDisplay, Log);
+            }
+            else
+            {
+                // Fall back on logging only if notification function is unavailable
+                switch (icon)
+                {
+                    case ToolTipIcon.Warning:
+                        Log.Warn(message);
+                        break;
+                    case ToolTipIcon.Error:
+                        Log.Error(message);
+                        break;
+                    default:
+                        Log.Info(message);
+                        break;
+                }
+            }
+        }
 
-        #region [ Static ]
+        /// <summary>
+        /// Executes the specified delegate asynchronously with the specified arguments on the main window
+        /// control thread for message loop processing.
+        /// </summary>
+        /// <param name="method">Delegate function to queue for execution on main thread.</param>
+        /// <param name="args">Any argument for delegate function.</param>
+        /// <returns><see cref="IAsyncResult"/> that represents the result of the BeginInvoke operation.</returns>
+        protected IAsyncResult BeginInvoke(Delegate method, params object[] args)
+        {
+            if ((object)m_beginInvokeFunction != null)
+                return m_beginInvokeFunction(method, args);
 
-        // Static Fields
-
-        // Static Constructor
-
-        // Static Properties
-
-        // Static Methods
+            return null;
+        }
 
         #endregion
     }

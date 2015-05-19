@@ -27,7 +27,7 @@ namespace AlexaDoPlugin.Commands
         /// <summary>
         /// Array of defined commands.
         /// </summary>
-        [XmlElement]
+        [XmlElement("command")]
         public Command[] Commands;
 
         /// <summary>

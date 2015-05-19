@@ -55,9 +55,9 @@
     <ApplicationIcon>AlexaDo.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="GSF.Core, Version=2.0.239.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\packages\GSF.Core.2.0.239\lib\net45\GSF.Core.dll</HintPath>
+    <Reference Include="GSF.Core, Version=2.1.62.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\GSF.Core.2.1.62-beta\lib\net45\GSF.Core.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Json">
       <HintPath>..\..\packages\JSON.1.0.1\lib\net40\Json.dll</HintPath>

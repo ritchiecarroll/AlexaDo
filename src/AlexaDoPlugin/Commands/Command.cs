@@ -11,8 +11,6 @@
 //
 //******************************************************************************************************
 
-using System;
-using System.Linq;
 using System.Xml.Serialization;
 
 namespace AlexaDoPlugin.Commands
@@ -20,7 +18,6 @@ namespace AlexaDoPlugin.Commands
     /// <summary>
     /// Represents a command to be executed consisting of a trigger, action and a response.
     /// </summary>
-    [XmlType("command")]
     public class Command
     {
         /// <summary>
@@ -64,44 +61,5 @@ namespace AlexaDoPlugin.Commands
         /// </summary>
         [XmlElement("notes", IsNullable = true)]
         public Notes Notes;
-
-        // TODO: add out query string parameter (for [query] replacement) that will remove key phrase upon start/end match
-
-        /// <summary>
-        /// Determines if Echo activity is a match for this <see cref="Command"/>.
-        /// </summary>
-        /// <param name="activity">Echo activity to test for match.</param>
-        /// <returns><c>true</c> if <paramref name="activity"/> is a match for this command; otherwise, <c>false</c>.</returns>
-        public bool IsMatch(EchoActivity activity)
-        {
-            // Validate inputs and outputs needed for test
-            if (string.IsNullOrWhiteSpace(activity.Command) || (object)Trigger == null || (object)Trigger.KeyPhrases == null || Trigger.KeyPhrases.Length == 0)
-                return false;
-
-            bool isMatch = false;
-
-            // Test for key phrase match
-            foreach (KeyPhrase phrase in Trigger.KeyPhrases)
-            {
-                switch (Trigger.MatchStyle)
-                {
-                    case MatchStyle.StartsWith:
-                        isMatch = activity.Command.StartsWith(phrase.CleanValue, StringComparison.OrdinalIgnoreCase);
-                        break;
-                    case MatchStyle.EndsWith:
-                        isMatch = activity.Command.EndsWith(phrase.CleanValue, StringComparison.OrdinalIgnoreCase);
-                        break;
-                    case MatchStyle.AnyOrder:
-                        isMatch = phrase.Words.All(word => activity.CommandWords.Contains(word));
-                        break;
-                }
-
-                // Stop testing if a match is found
-                if (isMatch)
-                    break;
-            }
-
-            return isMatch;
-        }
     }
 }

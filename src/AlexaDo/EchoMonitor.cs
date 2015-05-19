@@ -31,10 +31,6 @@ namespace AlexaDo
     {
         #region [ Members ]
 
-        // Constants
-        internal const ToolTipIcon DefaultToolTipIcon = ToolTipIcon.None;
-        internal const int DefaultToolTipTimeout = 1500;
-
         // Fields
         private AuthenticationManager m_authenticationManager;
         private ActivityProcessor m_activityProcessor;
@@ -220,7 +216,7 @@ namespace AlexaDo
                 base.WndProc(ref m);
         }
 
-        internal void ShowNotification(string message, ToolTipIcon icon = DefaultToolTipIcon, int timeout = DefaultToolTipTimeout, bool forceDisplay = false)
+        internal void ShowNotification(string message, ToolTipIcon icon = Settings.DefaultToolTipIcon, int timeout = Settings.DefaultToolTipTimeout, bool forceDisplay = false, ILog logger = null)
         {
             NotifyIcon.BalloonTipText = message;
             NotifyIcon.BalloonTipIcon = icon;
@@ -230,16 +226,19 @@ namespace AlexaDo
 
             UpdateStatus(string.Format("{0}{1}", icon == ToolTipIcon.None ? "" : string.Format("{0}: ", icon), message));
 
+            if ((object)logger == null)
+                logger = Log;
+
             switch (icon)
             {
                 case ToolTipIcon.Warning:
-                    Log.Warn(message);
+                    logger.Warn(message);
                     break;
                 case ToolTipIcon.Error:
-                    Log.Error(message);
+                    logger.Error(message);
                     break;
                 default:
-                    Log.Info(message);
+                    logger.Info(message);
                     break;
             }
         }

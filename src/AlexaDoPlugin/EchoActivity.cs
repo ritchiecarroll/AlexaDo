@@ -154,7 +154,7 @@ namespace AlexaDoPlugin
         /// <param name="other">An object to compare with this object.</param>
         public bool Equals(EchoActivity other)
         {
-            return string.CompareOrdinal(ID, other.ID) == 0;
+            return CompareTo(other) == 0;
         }
 
         #endregion

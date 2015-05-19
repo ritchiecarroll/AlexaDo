@@ -57,7 +57,7 @@ namespace AlexaDo
         public ActivityProcessor(EchoMonitor echoMonitor)
         {
             m_echoMonitor = echoMonitor;
-            m_pluginManager = new PluginManager();
+            m_pluginManager = new PluginManager(ShowNotification, echoMonitor.BeginInvoke);
         }
 
         #endregion
@@ -317,10 +317,6 @@ namespace AlexaDo
             if (processCommand)
             {
                 UpdateStatus("Processing Echo activity [{0}]: {1} \"{2}\"", activity.Status, activity.ID, activity.Command);
-#if DEBUG
-                if (Settings.TTSFeedbackEnabled)
-                    TTSEngine.Speak("Processing command: " + activity.Command);
-#endif
                 int processed = m_pluginManager.ProcessActivity(activity);
                 Log.InfoFormat("{0:N0} plug-in{1} processed Echo activity [{2}]: {3} \"{4}\"", processed, processed == 1 ? "" : "s", activity.Status, activity.ID, activity.Command);
             }
@@ -370,9 +366,12 @@ namespace AlexaDo
         }
 
         // Proxy notifications to UI message loop
-        private void ShowNotification(string message, ToolTipIcon icon = EchoMonitor.DefaultToolTipIcon, int timeout = EchoMonitor.DefaultToolTipTimeout, bool forceDisplay = false)
+        private void ShowNotification(string message, ToolTipIcon icon = Settings.DefaultToolTipIcon, int timeout = Settings.DefaultToolTipTimeout, bool forceDisplay = false, ILog logger = null)
         {
-            m_echoMonitor.BeginInvoke((Action<string, ToolTipIcon, int, bool>)m_echoMonitor.ShowNotification, message, icon, timeout, forceDisplay);
+            if ((object)logger == null)
+                logger = Log;
+
+            m_echoMonitor.BeginInvoke((Action<string, ToolTipIcon, int, bool, ILog>)m_echoMonitor.ShowNotification, message, icon, timeout, forceDisplay, logger);
         }
 
         // Proxy status updates to UI message loop
