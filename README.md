@@ -1,4 +1,4 @@
-# AlexaDo ![AlexaDo](https://raw.github.com/ritchiecarroll/AlexaDo/master/src/AlexaDo/AlexaDo.ico)
+# AlexaDo ![AlexaDo](https://raw.github.com/ritchiecarroll/AlexaDo/master/images/logo.png)
 Amazon Echo Invocation Plug-in Application
 C# / .NET 4.5
 
@@ -21,23 +21,23 @@ Once the application is installed, run the application by finding "AlexaDo Echo 
 
 <img src="https://raw.github.com/ritchiecarroll/AlexaDo/master/images/login.png" >
 
-This only needs to be done once, the application will securely cache login credentials for future runs. As long as the application has authenticated it will run in the background remain minimized to the task bar. You can access the application at any time from the task-bar via the AlexaDo icon: <img src="https://raw.github.com/ritchiecarroll/AlexaDo/master/src/AlexaDo/AlexaDo.ico" height="16" width="16" >. Clicking on the AlexaDo icon will pull up the monitoring screen:
+This only needs to be done once, the application will securely cache login credentials for future runs. As long as the application has authenticated it will run in the background remain minimized to the task bar. You can access the application at any time from the task-bar via the AlexaDo icon: <img src="https://raw.github.com/ritchiecarroll/AlexaDo/master/images/logo.png" height="16" width="16" >. Clicking on the AlexaDo icon will pull up the monitoring screen:
 
 <img src="https://raw.github.com/ritchiecarroll/AlexaDo/master/images/monitor.png" >
 
 On this screen you can watch as activities are triggered and change the desired TTS voice. If your Windows installation only has a single TTS voice, see [this article](https://forums.robertsspaceindustries.com/discussion/147385/voice-attack-getting-free-alternate-tts-voices-working-with-win7-8-64bit) to install more voices. Zira is the most similar to Alexa and is selected by default if it is installed.
 
-Commands will be triggered regardless of whether or not Alexa understands the spoken key phrases or not, however, for best results, it helps to prevent Alexa from trying interpret the commands. For example, if you are not expecting immediate feedback from a command, you can always start the command with "Simon Says" and Alexa will repeat the command back to you. Another option is to end your commands with a clear "Stop" which causes Alexa to cancel trying to interpret what you said and allowing any matched plug-ins to handle the command.
+Commands will be triggered regardless of whether or not Alexa understands the spoken key phrases. However, for best results, it helps to prevent Alexa from trying to interpret the commands. For example, if you are not expecting immediate feedback from a command, you can always start the command with "Simon Says" and Alexa will repeat the command back to you. Another option is to end your commands with a clear "Stop" which causes Alexa to cancel trying to interpret what you said and allowing any matched plug-ins to handle the command.
 
 ## Technical
 
 Note that this application attempts to attach to the Amazon WebSocket socket used to monitor cards for quick and dynamic response (see [piettes.com/echo forum](http://www.piettes.com/echo/viewtopic.php?f=3&t=10) for info on how this works). If the application fails to attach to the WebSocket, it will fall back on polling activities on an interval.
 
-In order to process text-to-speech feedback through Bluetooth, this application must currently be run inside of an active Windows session. It may be possible to change this application to run as a Windows service, but this is generally more work than I would like to tackle for a toy at the moment. Perhaps Amazon will open the Echo SDK that would allow Alexa to "say" something, if this happens, changing this application to run as service would be easier.
+In order to process text-to-speech feedback through Bluetooth, this application must currently be run inside of an active Windows session. It may be possible to change this application to run as a Windows service, but this is generally more work than I would like to tackle for a toy at the moment. Perhaps Amazon will open the Echo SDK such to allow Alexa to "say" something, if this happens, changing this application to run as service would be easier.
 
 ## Writing Plug-ins
 
-The included plug-in ,[AppLauncher](https://github.com/ritchiecarroll/AlexaDo/blob/master/src/Plugins/AppLauncher/Execute.cs), will provide the best example for writing new plug-ins. In general all you will need to do is create a new .NET class library project, reference _AlexaDoPlugin.dll_ and _log4net.dll_, sub-class _AlexaDoPluginBase_ and override the _ProcessActivity_ method. You can optionally override the _Initialize_ method to parse parameters passed to your plug-in. In order to instantiate your plug-in you will need to create an XML based ".commands" file, it should look something like the XML shown below - note that you can create multiple commands in one file.
+The included plug-in, [AppLauncher](https://github.com/ritchiecarroll/AlexaDo/blob/master/src/Plugins/AppLauncher/Execute.cs), will provide the best example for writing new plug-ins. In general all you will need to do is create a new .NET class library project, reference _AlexaDoPlugin.dll_ and _log4net.dll_, sub-class _AlexaDoPluginBase_ and override the _ProcessActivity_ method. You can optionally override the _Initialize_ method to parse parameters passed to your plug-in. In order to instantiate your plug-in you will need to create an XML based ".commands" file, it should look something like the XML shown below - note that you can create multiple commands in one file.
 
 In the XML based ".commands" example file below, a command will be triggered when either "do my thing" or "work that thing" is heard at the beginning of the detected speech. Note that the "StartsWith" means that even if you said "do my thing and dance a jig", this would trigger a match. You could create another command that triggered "EndsWith" for "dance a jig" and it would pick up and execute the command also. Multiple plug-ins can match a single command and will be triggered in the order that they are matched.
 
