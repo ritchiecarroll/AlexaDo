@@ -11,7 +11,7 @@ Note that the Google Responder is the only plug-in that automatically enabled. T
 
 ## Installation
 
-Download the installers zip file:
+Download the installers zip file, version 1.0.0.3:
 
 &nbsp;&nbsp;&nbsp; **_[Setup.zip](https://raw.github.com/ritchiecarroll/AlexaDo/master/Setup.zip)_**
 
@@ -34,6 +34,8 @@ Commands will be triggered regardless of whether or not Alexa understands the sp
 Note that this application attempts to attach to the Amazon WebSocket socket used to monitor cards for quick and dynamic response (see [piettes.com/echo forum](http://www.piettes.com/echo/viewtopic.php?f=3&t=10) for info on how this works). If the application fails to attach to the WebSocket, it will fall back on polling activities on an interval.
 
 In order to process text-to-speech feedback through Bluetooth, this application must currently be run inside of an active Windows session. It may be possible to change this application to run as a Windows service, but this is generally more work than I would like to tackle for a toy at the moment. Perhaps Amazon will open the Echo SDK such to allow Alexa to "say" something, if this happens, changing this application to run as service would be easier.
+
+Having trouble? Check AlexaDo log file: %APPDATA%\AlexaDo\AlexaDo.log
 
 ## Writing Plug-ins
 
@@ -62,7 +64,7 @@ Example: _MyIftttHandler.commands_
     <notes>
       <![CDATA[
         Examples:
-          alexa google do my thing stop
+          alexa do my thing stop
           alexa simon says work that thing
           
         Note: Define help for "How do I help other configure My IFTTT Handler to do your own thing?"
