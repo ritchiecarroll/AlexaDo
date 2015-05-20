@@ -5,23 +5,21 @@ C# / .NET 4.5
 This is a plug-in based application that will monitor activities spoken to the Amazon Echo, listen for key phrases then dispatch plug-in based actions based on what was heard. New plug-ins can be written in C# and configured through an XML based "commands" definition file. Included with the installation is an "AppLauncher" plug-in with two sample command definitions ([view source](https://github.com/ritchiecarroll/AlexaDo/blob/master/src/Plugins/AppLauncher/AppLauncher.commands)):
 
 1. "OK Google Responder" - allows commands like "__Alexa Google How old is George Washington Stop__"
-2. "E-mail Me" - when configured with a mailer like "[mailsend](http://github.com/muquit/mailsend)" allows commands like "__Alexa Simon Says email me feed the dog when I get home__" (_work on this adapter is still in progess_)
+2. "E-mail Me" - when configured with a mailer like "[mailsend](http://github.com/muquit/mailsend)" allows commands like "__Alexa Simon Says email me feed the dog when I get home__"
 
-Note that the Google Responder is the only plug-in that automatically enabled. This plug-in will "speak" the OK Google results in the Google voice back through the Amazon Echo if the computer is connected to the Echo via Bluetooth. Other plug-ins can use Windows based test-to-speech for responses to triggered actions.
-
-When installed, the application currently runs on Windows in the background and is accessible from the task-bar via the AlexaDo icon: <img src="https://raw.github.com/ritchiecarroll/AlexaDo/master/src/AlexaDo/AlexaDo.ico" height="16" width="16" >.
+Note that the Google Responder is the only plug-in that automatically enabled. This plug-in will "speak" the OK Google results in the Google voice back through the Amazon Echo if the computer is connected to the Echo via Bluetooth. Other plug-ins can use Windows based text-to-speech for responses to triggered actions. There is also a "FrontPoint Security" plug-in included, however work on this adapter is still in progress.
 
 ## Installation
 
 __[Download Installer: Setup.zip](https://raw.github.com/ritchiecarroll/AlexaDo/master/Setup.zip)__
 
-Run the __Setup.msi__ for your target platform
+Unzip files and run the proper __Setup.msi__ for your target OS platform, i.e., 32-bit or 64-bit.
 
-When the application is first run, you will need to authenticate with Amazon Echo:
+Once the application is installed, run the application by finding "AlexaDo Echo Monitor" from the start menu. When the application is run for the first time, a window will pop-up and you will need to authenticate with Amazon Echo:
 
 <img src="https://raw.github.com/ritchiecarroll/AlexaDo/master/images/login.png" >
 
-This only needs to be done once, the application will securely cache login credentials for future runs. As long as the application has authenticated it will remain minimized to the task bar. You can pull up the monitoring screen at any time by clicking on the AlexaDo icon:
+This only needs to be done once, the application will securely cache login credentials for future runs. As long as the application has authenticated it will run in the background remain minimized to the task bar. You can access the application from the task-bar via the AlexaDo icon: <img src="https://raw.github.com/ritchiecarroll/AlexaDo/master/src/AlexaDo/AlexaDo.ico" height="16" width="16" >. Clicking on the AlexaDo icon will pull up the monitoring screen:
 
 <img src="https://raw.github.com/ritchiecarroll/AlexaDo/master/images/monitor.png" >
 
