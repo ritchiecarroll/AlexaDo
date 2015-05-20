@@ -15,4 +15,11 @@ When installed, the application currently runs on Windows in the background and 
 
 When the application is first run, you will need to authenticate with Amazon Echo:
 
-This only needs to be done once, the application will securely cache login credentials for future runs. As long as the application has authenticated it will remain minimized to the task bar.
+<img src="https://raw.github.com/ritchiecarroll/AlexaDo/master/images/login.png" >
+
+This only needs to be done once, the application will securely cache login credentials for future runs. As long as the application has authenticated it will remain minimized to the task bar. You can pull up the monitoring screen at any time by clicking on the AlexaDo icon:
+
+<img src="https://raw.github.com/ritchiecarroll/AlexaDo/master/images/monitor.png" >
+
+On this screen you can watch as activities are triggered and change the desired text-to-speech voice. If your Windows installation only has a single voice, see [this article](https://forums.robertsspaceindustries.com/discussion/147385/voice-attack-getting-free-alternate-tts-voices-working-with-win7-8-64bit) to install more voices. Zira is the most similar to Alexa and is selected by default if it is installed.
+
