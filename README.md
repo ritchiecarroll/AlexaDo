@@ -11,7 +11,7 @@ Note that the Google Responder is the only plug-in that automatically enabled. T
 
 ## Installation
 
-__[Download Installer: Setup.zip](https://raw.github.com/ritchiecarroll/AlexaDo/master/Setup.zip)__
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; **_[Download Installer: Setup.zip](https://raw.github.com/ritchiecarroll/AlexaDo/master/Setup.zip)_**
 
 Unzip files and run the proper __Setup.msi__ for your target OS platform, i.e., 32-bit or 64-bit.
 
