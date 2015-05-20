@@ -1,4 +1,4 @@
-# AlexaDo ![AlexaDo](https://raw.github.com/ritchiecarroll/AlexaDo/master/src/AlexaDo/AlexaDo.ico)
+# AlexaDo ![AlexaDo](https://raw.github.com/ritchiecarroll/AlexaDo/master/images/logo.png)
 Amazon Echo Invocation Plug-in Application
 C# / .NET 4.5
 
