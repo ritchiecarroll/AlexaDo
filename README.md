@@ -11,7 +11,7 @@ Note that the Google Responder is the only plug-in that automatically enabled. T
 
 ## Installation
 
-Download the installers zip file:
+Download the installers zip file, version 1.0.0.1:
 
 &nbsp;&nbsp;&nbsp; **_[Setup.zip](https://raw.github.com/ritchiecarroll/AlexaDo/master/Setup.zip)_**
 
