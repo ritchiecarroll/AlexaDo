@@ -113,7 +113,6 @@ namespace AppLauncher
         /// </summary>
         /// <param name="activity">Echo activity to process.</param>
         /// <param name="query">Remaining command query, if any, when key phrase matched at start or end is removed.</param>
-        /// <returns><c>true</c> if activity was successfully processed; otherwise, <c>false</c>.</returns>
         /// <remarks>
         /// Implementor should throw an exception on failure - exception message text will be reported
         /// through [reason] text as specified in any command/response/failure definition text.
