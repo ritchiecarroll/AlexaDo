@@ -1,9 +1,4 @@
-<table border=0>
-  <tr>
-    <td><img src="https://raw.github.com/ritchiecarroll/AlexaDo/master/src/AlexaDo/AlexaDo.ico" ></td>
-    <td><h1>AlexaDo</h1></td>
-  </tr>
-</table>
+# AlexaDo ![AlexaDo](https://raw.github.com/ritchiecarroll/AlexaDo/master/src/AlexaDo/AlexaDo.ico)
 Amazon Echo Invocation Plug-in Application
 C# / .NET 4.5
 
