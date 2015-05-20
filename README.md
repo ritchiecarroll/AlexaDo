@@ -21,7 +21,7 @@ Once the application is installed, run the application by finding "AlexaDo Echo 
 
 <img src="https://raw.github.com/ritchiecarroll/AlexaDo/master/images/login.png" >
 
-This only needs to be done once, the application will securely cache login credentials for future runs. As long as the application has authenticated it will run in the background remain minimized to the task bar. You can access the application at any time from the task-bar via the AlexaDo icon: <img src="https://raw.github.com/ritchiecarroll/AlexaDo/master/src/AlexaDo/AlexaDo.ico" height="16" width="16" >. Clicking on the AlexaDo icon will pull up the monitoring screen:
+This only needs to be done once, the application will securely cache login credentials for future runs. As long as the application has authenticated it will run in the background remain minimized to the task bar. You can access the application at any time from the task-bar via the AlexaDo icon: <img src="https://raw.github.com/ritchiecarroll/AlexaDo/master/images/logo.png" height="16" width="16" >. Clicking on the AlexaDo icon will pull up the monitoring screen:
 
 <img src="https://raw.github.com/ritchiecarroll/AlexaDo/master/images/monitor.png" >
 
