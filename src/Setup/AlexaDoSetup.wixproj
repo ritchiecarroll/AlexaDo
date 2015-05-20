@@ -82,6 +82,8 @@
     <Content Include="AlexaDoSetupDialog.bmp" />
     <Content Include="ConfigCrypter.exe" />
     <Content Include="ConfigCrypter.exe.config" />
+    <Content Include="ConfigEditor.exe" />
+    <Content Include="ConfigEditor.exe.config" />
     <Content Include="InstallLicense.rtf" />
   </ItemGroup>
   <Import Project="$(WixTargetsPath)" />

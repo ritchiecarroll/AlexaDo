@@ -63,8 +63,8 @@ namespace AlexaDo
 
             // Make sure default user settings exist
             m_userSettings = ConfigurationFile.Current.Settings["user"];
-            m_userSettings.Add("UserName", "", "User name to use when authenticating", true, SettingScope.User);
-            m_userSettings.Add("Password", "", "Password to use when authenticating", true, SettingScope.User);
+            m_userSettings.Add("UserName", "user-setting", "User name to use when authenticating", true, SettingScope.User);
+            m_userSettings.Add("Password", "user-setting", "Password to use when authenticating", true, SettingScope.User);
 
             // Create a new script interface to detect new Echo activities
             ScriptInterface scriptInterface = new ScriptInterface();
@@ -444,15 +444,21 @@ namespace AlexaDo
         {
             try
             {
-                // Space assignment is important to properly clear credentials
-                // during encrypted serialization to user configuration...
-                m_userSettings["UserName"].Update(" ");
-                m_userSettings["Password"].Update(" ");
+                m_userSettings["UserName"].Value = "";
+                m_userSettings["Password"].Value = "";
                 ConfigurationFile.Current.Save();
             }
-            catch (Exception ex)
+            catch
             {
-                ShowNotification(string.Format("Failed to clear cached user credentials: {0}", ex.Message), ToolTipIcon.Error);
+                try
+                {
+                    // For exceptions, usually related to key changes, reset user settings file
+                    ConfigurationFile.Current.RestoreDefaultUserSettings();
+                }
+                catch (Exception ex)
+                {
+                    ShowNotification(string.Format("Failed to clear cached user credentials: {0}", ex.Message), ToolTipIcon.Error);
+                }
             }
         }
 

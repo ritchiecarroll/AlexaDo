@@ -27,7 +27,7 @@ namespace AlexaDo
         {
             // Initialize log4net.
             XmlConfigurator.Configure();
-            
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new EchoMonitor());

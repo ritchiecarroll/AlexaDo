@@ -24,7 +24,7 @@
         <ComponentGroupRef Id="AlexaDoDependencyComponents" />
         <ComponentGroupRef Id="GSFDependencyComponents" />
 
-        <Feature Id="AlexaDoPluginFeature" Title="Included Plug-ins" Description="AlexaDo Plug-ins available in this installation package">
+        <Feature Id="AlexaDoPluginFeature" Title="Included Plug-ins" Description="AlexaDo plug-ins available in this installation package">
           <Feature Id="AppLauncherFeature" Title="Application Launcher" Description="Plug-in launches an executable when triggered via Echo commands. Includes &quot;OK Google&quot; and &quot;E-mail Me&quot; sample command defintions.">
             <ComponentGroupRef Id="AppLauncherComponents" />
           </Feature>
@@ -152,7 +152,7 @@
     <ComponentGroup Id="ConfigEditorComponents" Directory="INSTALLFOLDER">
       <Component Id="ConfigEditor">
         <File Id="ConfigEditor.exe" Name="ConfigEditor.exe" Source="$(var.ProjectDir)\ConfigEditor.exe" />
-        <Shortcut Id="ConfigEditorStartMenuShortcut" Name="XML Configuration Editor" Icon="ConfigEditor.ico.exe" Description="Tool used edit the XML configuration file for the openPDC service and its components." WorkingDirectory="INSTALLFOLDER" Directory="ApplicationProgramsFolder" Advertise="yes" />
+        <Shortcut Id="ConfigEditorStartMenuShortcut" Name="XML Configuration Editor" Icon="ConfigEditor.ico.exe" Description="Tool used edit the XML configuration file for the AlexaDo application." WorkingDirectory="INSTALLFOLDER" Directory="ApplicationProgramsFolder" Advertise="yes" />
       </Component>
       <Component Id="ConfigEditorConfig">
         <File Id="ConfigEditor.exe.config" Name="ConfigEditor.exe.config" Source="$(var.ProjectDir)\ConfigEditor.exe.config" />
@@ -162,7 +162,7 @@
     <!-- GSF Dependencies -->
     <ComponentGroup Id="GSFDependencyComponents" Directory="INSTALLFOLDER">
       <Component Id="GSF.Core">
-        <File Id="GSF.Core.dll" Name="GSF.Core.dll" Source="$(var.SolutionDir)\packages\GSF.Core.2.1.62-beta\lib\net45\GSF.Core.dll" />
+        <File Id="GSF.Core.dll" Name="GSF.Core.dll" Source="$(var.SolutionDir)\packages\GSF.Core.2.1.63-beta\lib\net45\GSF.Core.dll" />
       </Component>
     </ComponentGroup>
   </Fragment>
