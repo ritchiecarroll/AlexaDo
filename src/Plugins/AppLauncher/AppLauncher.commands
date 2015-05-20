@@ -8,7 +8,7 @@
     <action>
       <assemblyName>AppLauncher.dll</assemblyName>
       <typeName>AppLauncher.Execute</typeName>
-      <parameters encrypted="false">program={"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe" &quot;https://www.google.com/search?gs_ivs=1&amp;q=[query]&quot;}; queryEncoding=URL; windowStyle=hidden; timeout=30</parameters>
+      <parameters encrypted="false">program={"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe" -incognito --disable-plugins --force-desktop &quot;https://www.google.com/search?gs_ivs=1&amp;q=[query]&quot;}; queryEncoding=URL</parameters>
     </action>
     <response>
       <succeeded />
@@ -33,7 +33,7 @@
     <action>
       <assemblyName>AppLauncher.dll</assemblyName>
       <typeName>AppLauncher.Execute</typeName>
-      <parameters encrypted="false">program={mailsend -to you@gmail.com -from alexa@amazon.com -starttls -port 587 -auth -smtp smtp.gmail.com -sub &quot;Your message from Alexa...&quot; -cs &quot;us-ascii&quot; -enc-type &quot;7bit&quot; -M &quot;[query]&quot; -user you@gmail.com -pass &quot;your_password&quot;}; windowStyle=hidden</parameters>
+      <parameters encrypted="false">program={mailsend -to you@gmail.com -from alexa@amazon.com -starttls -port 587 -auth -smtp smtp.gmail.com -sub &quot;Your message from Alexa...&quot; -cs &quot;us-ascii&quot; -enc-type &quot;7bit&quot; -M &quot;[query]&quot; -user you@gmail.com -pass &quot;your_password&quot;}; windowStyle=hidden; timeout=30</parameters>
     </action>
     <response>
       <succeeded type="tts">Message sent.</succeeded>

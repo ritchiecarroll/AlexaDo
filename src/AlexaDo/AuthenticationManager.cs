@@ -318,7 +318,7 @@ namespace AlexaDo
                 "   $('body').css('display', 'none');\r\n" +
                 "   $('html').append('<div style=\"position: fixed; top:2%; left: 3%; transform: translate(-2%, -3%);\"><h2>Monitoring Echo Activity...</h2></div>');\r\n" +
                 "   $('html').append('<div id=\"echochamber\" style=\"position: fixed; top:50%; left: 50%; transform: translate(-50%, -50%);\"><h1 class=\"command\">Waiting for you to interact with Alexa...</h1><br /><div class=\"output\" style=\"max-width: 50%; font-size: 10px; font-family: monospace\" /><br /><h3 class=\"displayTime\"></h3></div>');\r\n" +
-                "   $('html').append('<div id=\"echochamber_note\" style=\"position: fixed; bottom:50px; left: 50%; transform: translate(-50%, -50%);\"><em>Commands you say that trigger a card to be created will show up here... Try \"tell me a joke\".</em></div>');\r\n" +
+                "   $('html').append('<div id=\"echochamber_note\" style=\"position: fixed; bottom:50px; left: 50%; transform: translate(-50%, 90%);\"><em>Commands you say that trigger a card to be created will show up here... Try \"tell me a joke\".</em></div>');\r\n" +
                 "   $('html').css('background-color', 'white');\r\n" +
                 "   // On card create notification, fetch card details and display\r\n" +
                 "   var onPushActivity = function(c) {\r\n" +

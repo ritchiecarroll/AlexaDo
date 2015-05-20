@@ -18,14 +18,30 @@
     <MajorUpgrade Schedule="afterInstallInitialize" DowngradeErrorMessage="A newer version of [ProductName] is already installed. Setup will now exit." />
     <MediaTemplate EmbedCab="yes" />
 
-    <Feature Id="AllProducts" Title="All Products" Level="1" Display="expand" ConfigurableDirectory="INSTALLFOLDER" Description="All AlexDo Components">
-      <Feature Id="AlexaDoFeature" Title="AlexaDo Echo Monitor" Description="$(var.ApplicationDescription)">
+    <Feature Id="AlexaDoProductFeature" Title="AlexaDo Components" Level="1" Display="expand" ConfigurableDirectory="INSTALLFOLDER" Description="$(var.ApplicationDescription)">
         <ComponentRef Id="AlexaDo" />
         <ComponentRef Id="AlexaDoConfig" />
-      </Feature>
+        <ComponentGroupRef Id="AlexaDoDependencyComponents" />
+        <ComponentGroupRef Id="GSFDependencyComponents" />
 
-      <ComponentGroupRef Id="Dependencies" />
-      <ComponentRef Id="Cleanup" />
+        <Feature Id="AlexaDoPluginFeature" Title="Included Plug-ins" Description="AlexaDo Plug-ins available in this installation package">
+          <Feature Id="AppLauncherFeature" Title="Application Launcher" Description="Plug-in launches an executable when triggered via Echo commands. Includes &quot;OK Google&quot; and &quot;E-mail Me&quot; sample command defintions.">
+            <ComponentGroupRef Id="AppLauncherComponents" />
+          </Feature>
+          <Feature Id="FrontPointSecurityFeature" Title="FrontPoint Security" Description="Plug-in allows control of a FrontPoint Security system triggered through Echo commands. Includes sample command defintions.">
+            <ComponentGroupRef Id="FrontPointSecurityComponents" />
+          </Feature>
+        </Feature>
+        <Feature Id="AlexaDoToolsFeature" Title="Additional Tools" Description="Additional utilities that make AlexaDo configuration easier and more secure">
+          <Feature Id="ConfigCrypterFeature" Title="Config Crypter" Description="Utility to create encrypted configuration strings using locally generated and securely stored Key/IVs. Can only be launched with elevated privileges.">
+            <ComponentGroupRef Id="ConfigCrypterComponents" />
+          </Feature>
+          <Feature Id="ConfigEditorFeature" Title="Configuration Editor" Description="Utility to simplify editing of primary AlexaDo configuration settings.">
+            <ComponentGroupRef Id="ConfigEditorComponents" />
+          </Feature>
+        </Feature>
+
+        <ComponentRef Id="Cleanup" />
     </Feature>
 
     <!-- User Interface -->
@@ -36,6 +52,8 @@
     <WixVariable Id="WixUILicenseRtf" Value="$(var.ProjectDir)\InstallLicense.rtf" />
 
     <Icon Id="AlexaDo.ico.exe" SourceFile="$(var.AlexaDo.TargetPath)" />
+    <Icon Id="ConfigCrypter.ico.exe" SourceFile="$(var.ProjectDir)\ConfigCrypter.exe" />
+    <Icon Id="ConfigEditor.ico.exe" SourceFile="$(var.ProjectDir)\ConfigEditor.exe" />
 
     <!-- Add/Remove Programs Icon -->
     <Property Id="ARPPRODUCTICON" Value="AlexaDo.ico.exe" />
@@ -68,6 +86,7 @@
       <!-- Applications -->
       <Component Id="AlexaDo">
         <File Id="AlexaDo.exe" Name="$(var.AlexaDo.TargetFileName)" Source="$(var.AlexaDo.TargetPath)" />
+        <Shortcut Id="AlexaDoStartMenuShortcut" Name="AlexaDo Echo Monitor" Icon="AlexaDo.ico.exe" Description="Amazon Echo Monitoring and Plug-in Invocation Application." WorkingDirectory="INSTALLFOLDER" Directory="ApplicationProgramsFolder" Advertise="yes" />
       </Component>
 
       <Component Id="AlexaDoConfig">
@@ -82,8 +101,9 @@
       </Component>
     </ComponentGroup>
 
-    <ComponentGroup Id="Dependencies" Directory="INSTALLFOLDER">
-      <!-- Libraries -->
+    <!-- AlexaDo Dependencies -->
+    <ComponentGroup Id="AlexaDoDependencyComponents" Directory="INSTALLFOLDER">
+      <!-- AlexaDo Plug-in Dependency -->
       <Component Id="AlexaDoPlugin">
         <File Id="AlexaDoPlugin.dll" Name="$(var.AlexaDoPlugin.TargetFileName)" Source="$(var.AlexaDoPlugin.TargetPath)" />
       </Component>
@@ -97,10 +117,52 @@
       <Component Id="log4net">
         <File Id="log4net.dll" Name="log4net.dll" Source="$(var.SolutionDir)\packages\log4net.2.0.3\lib\net40-full\log4net.dll" />
       </Component>
+    </ComponentGroup>
+    
+    <!-- Included Plug-ins -->
+    <ComponentGroup Id="AppLauncherComponents" Directory="INSTALLFOLDER">
+      <Component Id="AppLauncher">
+        <File Id="AppLauncher.dll" Name="$(var.AppLauncher.TargetFileName)" Source="$(var.AppLauncher.TargetPath)" />
+      </Component>
+      <Component Id="AppLauncherCommands">
+        <File Id="AppLauncher.commands" Name="$(var.AppLauncher.ProjectName).commands" Source="$(var.AppLauncher.TargetDir)$(var.AppLauncher.ProjectName).commands" />
+      </Component>
+    </ComponentGroup>
 
-      <!-- GSF Dependencies -->
+    <ComponentGroup Id="FrontPointSecurityComponents" Directory="INSTALLFOLDER">
+      <Component Id="FrontPointSecurity">
+        <File Id="FrontPointSecurity.dll" Name="$(var.FrontPointSecurity.TargetFileName)" Source="$(var.FrontPointSecurity.TargetPath)" />
+      </Component>
+      <Component Id="FrontPointSecurityCommands">
+        <File Id="FrontPointSecurity.commands" Name="$(var.FrontPointSecurity.ProjectName).commands" Source="$(var.FrontPointSecurity.TargetDir)$(var.FrontPointSecurity.ProjectName).commands" />
+      </Component>
+    </ComponentGroup>
+
+    <!-- Included Tools -->
+    <ComponentGroup Id="ConfigCrypterComponents" Directory="INSTALLFOLDER">
+      <Component Id="ConfigCrypter">
+        <File Id="ConfigCrypter.exe" Name="ConfigCrypter.exe" Source="$(var.ProjectDir)\ConfigCrypter.exe" />
+        <Shortcut Id="ConfigurationCrypterStartMenuShortcut" Name="Cipher Key Manager" Icon="ConfigCrypter.ico.exe" Description="Tool used to manage cryptographic cipher keys." WorkingDirectory="INSTALLFOLDER" Directory="ApplicationProgramsFolder" Advertise="yes" />
+      </Component>
+      <Component Id="ConfigCrypterConfig">
+        <File Id="ConfigCrypter.exe.config" Name="ConfigCrypter.exe.config" Source="$(var.ProjectDir)\ConfigCrypter.exe.config" />
+      </Component>
+    </ComponentGroup>
+
+    <ComponentGroup Id="ConfigEditorComponents" Directory="INSTALLFOLDER">
+      <Component Id="ConfigEditor">
+        <File Id="ConfigEditor.exe" Name="ConfigEditor.exe" Source="$(var.ProjectDir)\ConfigEditor.exe" />
+        <Shortcut Id="ConfigEditorStartMenuShortcut" Name="XML Configuration Editor" Icon="ConfigEditor.ico.exe" Description="Tool used edit the XML configuration file for the openPDC service and its components." WorkingDirectory="INSTALLFOLDER" Directory="ApplicationProgramsFolder" Advertise="yes" />
+      </Component>
+      <Component Id="ConfigEditorConfig">
+        <File Id="ConfigEditor.exe.config" Name="ConfigEditor.exe.config" Source="$(var.ProjectDir)\ConfigEditor.exe.config" />
+      </Component>
+    </ComponentGroup>
+
+    <!-- GSF Dependencies -->
+    <ComponentGroup Id="GSFDependencyComponents" Directory="INSTALLFOLDER">
       <Component Id="GSF.Core">
-        <File Id="GSF.Core.dll" Name="GSF.Core.dll" Source="$(var.SolutionDir)\packages\GSF.Core.2.0.239\lib\net45\GSF.Core.dll" />
+        <File Id="GSF.Core.dll" Name="GSF.Core.dll" Source="$(var.SolutionDir)\packages\GSF.Core.2.1.62-beta\lib\net45\GSF.Core.dll" />
       </Component>
     </ComponentGroup>
   </Fragment>

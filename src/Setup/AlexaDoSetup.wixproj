@@ -80,6 +80,8 @@
   <ItemGroup>
     <Content Include="AlexaDoSetupBanner.bmp" />
     <Content Include="AlexaDoSetupDialog.bmp" />
+    <Content Include="ConfigCrypter.exe" />
+    <Content Include="ConfigCrypter.exe.config" />
     <Content Include="InstallLicense.rtf" />
   </ItemGroup>
   <Import Project="$(WixTargetsPath)" />

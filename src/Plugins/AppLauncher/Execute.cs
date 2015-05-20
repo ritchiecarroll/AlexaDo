@@ -156,8 +156,13 @@ namespace AppLauncher
                         // Wait for process to exit, or terminate after specified timeout
                         timedOut = process.WaitForExit(m_timeout);
 
-                        // Close main window (if launched application has one?)
-                        process.CloseMainWindow();
+                        // Close main window (if launched application has one)
+                        if (!process.HasExited)
+                            process.CloseMainWindow();
+
+                        // Don't leave processes hanging around
+                        if (!process.HasExited)
+                            process.Kill();
                     }
                     finally
                     {
@@ -165,12 +170,13 @@ namespace AppLauncher
                     }
 
                     // Log execution state
-                    Log.InfoFormat("Executed \"{0}\" with parameters \"{1}\" - {2}",
+                    Log.InfoFormat("Executed \"{0}\" with parameters \"{1}\" - {2}, exit code: {3}",
                         m_program,
                         arguments.ToNonNullString(),
                         timedOut ?
                             string.Format("application terminated after {0} second timeout", m_timeout * SI.Milli) :
-                            "application self-terminated");
+                            "application self-terminated",
+                        process.ExitCode);
                 }
             }
             catch (Exception ex)
