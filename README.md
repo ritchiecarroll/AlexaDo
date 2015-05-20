@@ -64,7 +64,7 @@ Example: _MyIftttHandler.commands_
     <notes>
       <![CDATA[
         Examples:
-          alexa google do my thing stop
+          alexa do my thing stop
           alexa simon says work that thing
           
         Note: Define help for "How do I help other configure My IFTTT Handler to do your own thing?"
