@@ -75,5 +75,5 @@ Example: _MyIftttHandler.commands_
 ```
 <a name="versions" id="versions"></a>
 ## Versions
-1.0.0.3 - 5/20/2015 - Initial release with installation package.
+1.0.0.3 - 5/20/2015 - Initial release with installation package.<br>
 1.0.0.4 - 5/26/2015 - Posted a fix for writing processed activity cache with non-admin rights.
