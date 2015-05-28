@@ -294,12 +294,14 @@ namespace AlexaDo
             bool processCommand = false;
 
             // Check for commands ending with end key word, e.g, "Stop"
-            if (activity.Status.Equals("SYSTEM_ABANDONED", StringComparison.OrdinalIgnoreCase))
+            bool endsWithKeyWord = activity.Command.EndsWith(Settings.EndKeyWord, StringComparison.OrdinalIgnoreCase);
+
+            if (endsWithKeyWord || activity.Status.Equals("SYSTEM_ABANDONED", StringComparison.OrdinalIgnoreCase))
             {
                 processCommand = true;
 
                 // Remove end key word from command, if it exists
-                if (activity.Command.EndsWith(Settings.EndKeyWord, StringComparison.OrdinalIgnoreCase))
+                if (endsWithKeyWord)
                     activity.Command = activity.Command.Substring(0, activity.Command.Length - Settings.EndKeyWord.Length - 1);
             }
 
