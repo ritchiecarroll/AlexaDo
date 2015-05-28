@@ -11,7 +11,7 @@ Note that the Google Responder is the only plug-in that is automatically enabled
 
 ## Installation
 
-Download the installers zip file, version 1.0.0.3:
+Download the installers zip file, version 1.0.0.4 (<a href="#versions">versions</a>):
 
 &nbsp;&nbsp;&nbsp; **_[Setup.zip](https://raw.github.com/ritchiecarroll/AlexaDo/master/Setup.zip)_**
 
@@ -73,3 +73,7 @@ Example: _MyIftttHandler.commands_
   </command>
 </commands>
 ```
+<a name="versions" id="versions"></a>
+## Versions
+1.0.0.3 - 5/20/2015 - Initial release with installation package.<br>
+1.0.0.4 - 5/26/2015 - Posted a fix for writing processed activity cache with non-admin rights.

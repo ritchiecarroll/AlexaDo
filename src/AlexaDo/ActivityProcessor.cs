@@ -139,7 +139,7 @@ namespace AlexaDo
                     Ticks startTime = DateTime.UtcNow;
                     UpdateStatus("Downloading Echo activity data...");
 
-                    string processedCacheFileName = FilePath.GetAbsolutePath(ProcessedActivitiesCacheFileName);
+                    string processedCacheFileName = Path.Combine(FilePath.GetApplicationDataFolder(), ProcessedActivitiesCacheFileName);
                     bool processedCacheUpdated = false;
 
                     // Deserialize processed activity cache from last run, if any
