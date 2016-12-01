@@ -1,7 +1,7 @@
 ﻿//******************************************************************************************************
 //  Settings.cs - Gbtc
 //
-//  Copyright © 2015, James Ritchie Carroll.  All Rights Reserved.
+//  Copyright © 2016, James Ritchie Carroll.  All Rights Reserved.
 //  MIT License (MIT)
 //
 //  Code Modification History:
@@ -37,7 +37,7 @@ namespace AlexaDoPlugin
         /// <summary>
         /// API parameters to query five Amazon Echo activities from history.
         /// </summary>
-        public const string QueryTopFiveActivities = "?startTime=&endTime=&size=5&offset=-1";
+        public const string QueryTopFiveActivities = "?startTime=&size=5&offset=-1";
 
         /// <summary>
         /// Default tool-tip icon for notifications.
@@ -97,57 +97,27 @@ namespace AlexaDoPlugin
         /// <summary>
         /// Gets the configured user-agent string to use when making web requests.
         /// </summary>
-        public static string UserAgent
-        {
-            get
-            {
-                return s_userAgent;
-            }
-        }
+        public static string UserAgent => s_userAgent;
 
         /// <summary>
         /// Gets the configured query interval to use when making activity queries.
         /// </summary>
-        public static int QueryInterval
-        {
-            get
-            {
-                return s_queryInterval;
-            }
-        }
+        public static int QueryInterval => s_queryInterval;
 
         /// <summary>
         /// Gets the configured time tolerance, compared to local clock, for processing recent Echo activities.
         /// </summary>
-        public static double TimeTolerance
-        {
-            get
-            {
-                return s_timeTolerance;
-            }
-        }
+        public static double TimeTolerance => s_timeTolerance;
 
         /// <summary>
         /// Gets the configured Echo key word for marking the start of commands, e.g., Simon Says.
         /// </summary>
-        public static string StartKeyWord
-        {
-            get
-            {
-                return s_startKeyWord;
-            }
-        }
+        public static string StartKeyWord => s_startKeyWord;
 
         /// <summary>
         /// Gets the configured Echo key word for marking the end of commands, e.g., Stop.
         /// </summary>
-        public static string EndKeyWord
-        {
-            get
-            {
-                return s_endKeyWord;
-            }
-        }
+        public static string EndKeyWord => s_endKeyWord;
 
         /// <summary>
         /// Gets or sets current authentication state.

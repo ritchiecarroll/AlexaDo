@@ -9,10 +9,9 @@
       <?define ApplicationDescription = "AlexaDo Amazon Echo Invocation Plug-in Application (32-bit)" ?>
     <?endif ?>
 
-    <PropertyRef Id="NETFRAMEWORK45"/>
-
-    <Condition Message='This setup requires Microsoft .NET Framework 4.5 or greater - this will need to be installed before installation can continue.'>
-      <![CDATA[Installed OR NETFRAMEWORK45]]>
+    <PropertyRef Id="WIX_IS_NETFRAMEWORK_46_OR_LATER_INSTALLED"/>
+    <Condition Message='This setup requires Microsoft .NET Framework 4.6 or greater - this will need to be installed before installation can continue.'>
+      <![CDATA[Installed OR WIX_IS_NETFRAMEWORK_46_OR_LATER_INSTALLED]]>
     </Condition>
 
     <MajorUpgrade Schedule="afterInstallInitialize" DowngradeErrorMessage="A newer version of [ProductName] is already installed. Setup will now exit." />
@@ -21,6 +20,7 @@
     <Feature Id="AlexaDoProductFeature" Title="AlexaDo Components" Level="1" Display="expand" ConfigurableDirectory="INSTALLFOLDER" Description="$(var.ApplicationDescription)">
         <ComponentRef Id="AlexaDo" />
         <ComponentRef Id="AlexaDoConfig" />
+      
         <ComponentGroupRef Id="AlexaDoDependencyComponents" />
         <ComponentGroupRef Id="GSFDependencyComponents" />
 
@@ -47,6 +47,7 @@
     <!-- User Interface -->
     <UIRef Id="WixUI_FeatureTree" />
     <UIRef Id="WixUI_ErrorProgressText" />
+    
     <WixVariable Id="WixUIBannerBmp" Value="$(var.ProjectDir)\AlexaDoSetupBanner.bmp" />
     <WixVariable Id="WixUIDialogBmp" Value="$(var.ProjectDir)\AlexaDoSetupDialog.bmp" />
     <WixVariable Id="WixUILicenseRtf" Value="$(var.ProjectDir)\InstallLicense.rtf" />
@@ -115,7 +116,7 @@
 
       <!-- log4net Dependencies -->
       <Component Id="log4net">
-        <File Id="log4net.dll" Name="log4net.dll" Source="$(var.SolutionDir)\packages\log4net.2.0.3\lib\net40-full\log4net.dll" />
+        <File Id="log4net.dll" Name="log4net.dll" Source="$(var.SolutionDir)\packages\log4net.2.0.5\lib\net45-full\log4net.dll" />
       </Component>
     </ComponentGroup>
     
@@ -162,7 +163,7 @@
     <!-- GSF Dependencies -->
     <ComponentGroup Id="GSFDependencyComponents" Directory="INSTALLFOLDER">
       <Component Id="GSF.Core">
-        <File Id="GSF.Core.dll" Name="GSF.Core.dll" Source="$(var.SolutionDir)\packages\GSF.Core.2.1.63-beta\lib\net45\GSF.Core.dll" />
+        <File Id="GSF.Core.dll" Name="GSF.Core.dll" Source="$(var.SolutionDir)\packages\GSF.Core.2.1.391-beta\lib\net46\GSF.Core.dll" />
       </Component>
     </ComponentGroup>
   </Fragment>

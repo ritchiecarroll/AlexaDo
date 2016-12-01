@@ -1,7 +1,7 @@
 ﻿//******************************************************************************************************
 //  KeyPhrase.cs - Gbtc
 //
-//  Copyright © 2015, James Ritchie Carroll.  All Rights Reserved.
+//  Copyright © 2016, James Ritchie Carroll.  All Rights Reserved.
 //  MIT License (MIT)
 //
 //  Code Modification History:
@@ -28,13 +28,7 @@ namespace AlexaDoPlugin.Commands
         /// <summary>
         /// Get array of words parsed from key phrase <see cref="Value"/>.
         /// </summary>
-        public string[] Words
-        {
-            get
-            {
-                return m_words;
-            }
-        }
+        public string[] Words => m_words;
 
         /// <summary>
         /// Comma or space separated list of words that make up key phrase.
@@ -56,12 +50,6 @@ namespace AlexaDoPlugin.Commands
         /// <summary>
         /// Gets a clean phrase value, i.e., all words joined together with spaces.
         /// </summary>
-        public string CleanValue
-        {
-            get
-            {
-                return m_cleanValue;
-            }
-        }
+        public string CleanValue => m_cleanValue;
     }
 }

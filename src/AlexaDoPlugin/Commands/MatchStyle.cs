@@ -1,7 +1,7 @@
 ﻿//******************************************************************************************************
 //  MatchStyle.cs - Gbtc
 //
-//  Copyright © 2015, James Ritchie Carroll.  All Rights Reserved.
+//  Copyright © 2016, James Ritchie Carroll.  All Rights Reserved.
 //  MIT License (MIT)
 //
 //  Code Modification History:

@@ -1,7 +1,7 @@
 ﻿//******************************************************************************************************
 //  AuthenticationManager.cs - Gbtc
 //
-//  Copyright © 2015, James Ritchie Carroll.  All Rights Reserved.
+//  Copyright © 2016, James Ritchie Carroll.  All Rights Reserved.
 //  MIT License (MIT)
 //
 //  Code Modification History:
@@ -235,7 +235,7 @@ namespace AlexaDo
 
                     // Arrival at echo.amazon.com indicates successful authentication
                     // TODO: Check for more reliable way to validate authentication - URL's could change in the future...
-                    if ((object)doc.Url != null && doc.Url.Host.Equals("echo.amazon.com", StringComparison.OrdinalIgnoreCase))
+                    if ((object)doc.Url != null && doc.Url.Host.Equals("alexa.amazon.com", StringComparison.OrdinalIgnoreCase))
                     {
                         if (manualLogin)
                         {
@@ -252,7 +252,7 @@ namespace AlexaDo
                             }
                             catch (Exception ex)
                             {
-                                ShowNotification(string.Format("Failed to cache user credentials: {0}", ex.Message), ToolTipIcon.Error);
+                                ShowNotification($"Failed to cache user credentials: {ex.Message}", ToolTipIcon.Error);
                             }
                         }
                         else
@@ -280,7 +280,7 @@ namespace AlexaDo
                             if (m_automatedLoginAttempts < 5)
                             {
                                 // Retry automated authentication a few times, maybe data connection is not available at the moment
-                                ShowNotification(string.Format("Failed to authenticate, trying again in {0:N0} seconds.", m_echoMonitor.QueryTimer.Interval / 1000), ToolTipIcon.Warning);
+                                ShowNotification($"Failed to authenticate, trying again in {m_echoMonitor.QueryTimer.Interval / 1000:N0} seconds.", ToolTipIcon.Warning);
 
                                 // Pause 5 seconds between automated authentication attempts
                                 DateTime waitTime = DateTime.UtcNow.AddSeconds(5.0);
@@ -301,7 +301,7 @@ namespace AlexaDo
             }
             catch (Exception ex)
             {
-                ShowNotification(string.Format("Failure during authentication attempt: {0}", ex.Message), ToolTipIcon.Error);
+                ShowNotification($"Failure during authentication attempt: {ex.Message}", ToolTipIcon.Error);
             }
 
             // Update task bar icon tool tip with current authentication state
@@ -457,7 +457,7 @@ namespace AlexaDo
                 }
                 catch (Exception ex)
                 {
-                    ShowNotification(string.Format("Failed to clear cached user credentials: {0}", ex.Message), ToolTipIcon.Error);
+                    ShowNotification($"Failed to clear cached user credentials: {ex.Message}", ToolTipIcon.Error);
                 }
             }
         }

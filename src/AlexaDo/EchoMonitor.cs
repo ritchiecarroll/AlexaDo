@@ -1,7 +1,7 @@
 ﻿//******************************************************************************************************
 //  EchoMonitor.cs - Gbtc
 //
-//  Copyright © 2015, James Ritchie Carroll.  All Rights Reserved.
+//  Copyright © 2016, James Ritchie Carroll.  All Rights Reserved.
 //  MIT License (MIT)
 //
 //  Code Modification History:
@@ -109,7 +109,7 @@ namespace AlexaDo
 
         private void BrowserControl_Navigating(object sender, WebBrowserNavigatingEventArgs e)
         {
-            URLFeedbackLabel.Text = string.Format("Navigating to {0}...", e.Url);
+            URLFeedbackLabel.Text = $"Navigating to {e.Url}...";
         }
 
         private void BrowserControl_ProgressChanged(object sender, WebBrowserProgressChangedEventArgs e)
@@ -123,7 +123,7 @@ namespace AlexaDo
 
         private void BrowserControl_DocumentCompleted(object sender, WebBrowserDocumentCompletedEventArgs e)
         {
-            URLFeedbackLabel.Text = string.Format("Loaded {0}.", e.Url);
+            URLFeedbackLabel.Text = $"Loaded {e.Url}.";
         }
 
         private void ShowMenuItem_Click(object sender, EventArgs e)
@@ -224,7 +224,7 @@ namespace AlexaDo
             if (!Visible || forceDisplay)
                 NotifyIcon.ShowBalloonTip(timeout);
 
-            UpdateStatus(string.Format("{0}{1}", icon == ToolTipIcon.None ? "" : string.Format("{0}: ", icon), message));
+            UpdateStatus($"{(icon == ToolTipIcon.None ? "" : $"{icon}: ")}{message}");
 
             if ((object)logger == null)
                 logger = Log;
@@ -245,7 +245,7 @@ namespace AlexaDo
 
         internal void UpdateStatus(string message, params object[] args)
         {
-            StatusLabel.Text = string.Format("[{0:F}] {1}", DateTime.Now, string.Format(message, args));
+            StatusLabel.Text = $"[{DateTime.Now:F}] {string.Format(message, args)}";
         }
 
         internal void ShowWindow()
@@ -266,7 +266,7 @@ namespace AlexaDo
         internal void HideWindow(bool notify = false)
         {
             if (notify)
-                ShowNotification(string.Format("{0} still running in task bar...", NotifyIcon.Tag), ToolTipIcon.Info, forceDisplay: true);
+                ShowNotification($"{NotifyIcon.Tag} still running in task bar...", ToolTipIcon.Info, forceDisplay: true);
 
             Hide();
         }
@@ -276,11 +276,18 @@ namespace AlexaDo
             if ((object)m_activityProcessor == null)
                 return;
 
-            // If did not process activities, retry authentication
-            if (!m_activityProcessor.ProcessActivities())
-                Reauthenticate(false);
+            try
+            {
+                // If did not process activities, retry authentication
+                if (!m_activityProcessor.ProcessActivities())
+                    Reauthenticate(false);
 
-            BeginInvoke((Action)UpdateTaskbarTooltip);
+                BeginInvoke((Action)UpdateTaskbarTooltip);
+            }
+            catch (Exception ex)
+            {
+                Log.Error("TryProcessActivities Exception", ex);
+            }
         }
 
         internal void UpdateTaskbarTooltip()
@@ -290,10 +297,7 @@ namespace AlexaDo
 
             long queries = m_activityProcessor.TotalQueries;
 
-            NotifyIcon.Text = string.Format("{0} - {1}", NotifyIcon.Tag, Settings.Authenticated ?
-                string.Format("Authenticated, {0:N0} {1}",
-                    queries, queries == 1 ? "query" : "queries") :
-                "Not Authenticated");
+            NotifyIcon.Text = $"{NotifyIcon.Tag} - {(Settings.Authenticated ? $"Authenticated, {queries:N0} {(queries == 1 ? "query" : "queries")}" : "Not Authenticated")}";
         }
 
         private void Reauthenticate(bool requestCredentials)
@@ -325,7 +329,7 @@ namespace AlexaDo
                 }
                 else
                 {
-                    IEnumerable<string> selectedVoices = TTSEngine.VoiceNames.Where(voice => voice.Equals(voiceName, StringComparison.OrdinalIgnoreCase));
+                    string[] selectedVoices = TTSEngine.VoiceNames.Where(voice => voice.Equals(voiceName, StringComparison.OrdinalIgnoreCase)).ToArray();
 
                     if (selectedVoices.Any())
                     {
@@ -354,7 +358,7 @@ namespace AlexaDo
                 // Fall back on no voice for errors
                 Settings.TTSFeedbackEnabled = false;
                 VoiceDropDown.Text = "None";
-                ShowNotification(string.Format("Failed to select voice: {0}", ex.Message), ToolTipIcon.Error);
+                ShowNotification($"Failed to select voice: {ex.Message}", ToolTipIcon.Error);
             }
 
             // Save current voice selection

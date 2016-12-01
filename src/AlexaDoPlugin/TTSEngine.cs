@@ -1,7 +1,7 @@
 ﻿//******************************************************************************************************
 //  TTSEngine.cs - Gbtc
 //
-//  Copyright © 2015, James Ritchie Carroll.  All Rights Reserved.
+//  Copyright © 2016, James Ritchie Carroll.  All Rights Reserved.
 //  MIT License (MIT)
 //
 //  Code Modification History:
@@ -47,24 +47,12 @@ namespace AlexaDoPlugin
         /// <summary>
         /// Gets list of condensed TTS voice names.
         /// </summary>
-        public static string[] VoiceNames
-        {
-            get
-            {
-                return s_voices.Keys.ToArray();
-            }
-        }
+        public static string[] VoiceNames => s_voices.Keys.ToArray();
 
         /// <summary>
         /// Gets list of installed voice information.
         /// </summary>
-        public static InstalledVoice[] InstalledVoices
-        {
-            get
-            {
-                return s_voices.Values.ToArray();
-            }
-        }
+        public static InstalledVoice[] InstalledVoices => s_voices.Values.ToArray();
 
         /// <summary>
         /// Gets or sets selected TTS voice.
@@ -146,7 +134,7 @@ namespace AlexaDoPlugin
         private static string GetShortVoiceName(string voiceName)
         {
             if ((object)voiceName == null)
-                throw new ArgumentNullException("voiceName");
+                throw new ArgumentNullException(nameof(voiceName));
 
             if (voiceName.StartsWith(BaseVoiceName, StringComparison.OrdinalIgnoreCase))
                 voiceName = voiceName.Substring(BaseVoiceName.Length, voiceName.Length - BaseVoiceName.Length - 1);

@@ -1,7 +1,7 @@
 ﻿//******************************************************************************************************
 //  ActivityProcessor.cs - Gbtc
 //
-//  Copyright © 2015, James Ritchie Carroll.  All Rights Reserved.
+//  Copyright © 2016, James Ritchie Carroll.  All Rights Reserved.
 //  MIT License (MIT)
 //
 //  Code Modification History:
@@ -187,7 +187,7 @@ namespace AlexaDo
                             // Parse key activity elements
                             Dictionary<string, object> activityElements = json.activities[i];
                             status = activityElements["activityStatus"].ToString();
-                            time = (new UnixTimeTag(double.Parse(activityElements["creationTimestamp"].ToString()) * SI.Milli)).ToDateTime();
+                            time = new UnixTimeTag((decimal)(double.Parse(activityElements["creationTimestamp"].ToString()) * SI.Milli)).ToDateTime();
                             id = activityElements["id"].ToString();
                             command = ParseEchoSpeechSummary(activityElements["description"].ToString());
 
@@ -246,7 +246,7 @@ namespace AlexaDo
             }
             catch (Exception ex)
             {
-                ShowNotification(string.Format("Failure while processing activities: {0}", ex.Message), ToolTipIcon.Error);
+                ShowNotification($"Failure while processing activities: {ex.Message}", ToolTipIcon.Error);
             }
             finally
             {
@@ -280,7 +280,7 @@ namespace AlexaDo
             }
             catch (Exception ex)
             {
-                ShowNotification(string.Format("Failure while processing test activity: {0}", ex.Message), ToolTipIcon.Error);
+                ShowNotification($"Failure while processing test activity: {ex.Message}", ToolTipIcon.Error);
             }
             finally
             {
@@ -348,7 +348,7 @@ namespace AlexaDo
             }
             catch (Exception ex)
             {
-                ShowNotification(string.Format("Failed to restore processed activities cache: {0}", ex.Message), ToolTipIcon.Error);
+                ShowNotification($"Failed to restore processed activities cache: {ex.Message}", ToolTipIcon.Error);
             }
 
             return new HashSet<EchoActivity>();
@@ -363,7 +363,7 @@ namespace AlexaDo
             }
             catch (Exception ex)
             {
-                ShowNotification(string.Format("Failed to persist processed activities cache: {0}", ex.Message), ToolTipIcon.Error);
+                ShowNotification($"Failed to persist processed activities cache: {ex.Message}", ToolTipIcon.Error);
             }
         }
 

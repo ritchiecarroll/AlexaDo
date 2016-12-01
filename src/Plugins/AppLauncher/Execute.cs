@@ -1,7 +1,7 @@
 ﻿//******************************************************************************************************
 //  Execute.cs - Gbtc
 //
-//  Copyright © 2015, James Ritchie Carroll.  All Rights Reserved.
+//  Copyright © 2016, James Ritchie Carroll.  All Rights Reserved.
 //  MIT License (MIT)
 //
 //  Code Modification History:
@@ -102,7 +102,7 @@ namespace AppLauncher
 
             // Convert timeout from seconds to milliseconds
             if (m_timeout > 0)
-                m_timeout *= (int)SI.Kilo;
+                m_timeout = (int)(m_timeout / SI.Milli);
 
             // Call base initialization method to ensure plug-in Enabled state is set to true
             base.Initialize();
@@ -172,9 +172,7 @@ namespace AppLauncher
                     Log.InfoFormat("Executed \"{0}\" with parameters \"{1}\" - {2}, exit code: {3}",
                         m_program,
                         arguments.ToNonNullString(),
-                        timedOut ?
-                            string.Format("application terminated after {0} second timeout", m_timeout * SI.Milli) :
-                            "application self-terminated",
+                        timedOut ? $"application terminated after {m_timeout * SI.Milli} second timeout" : "application self-terminated",
                         process.ExitCode);
                 }
             }

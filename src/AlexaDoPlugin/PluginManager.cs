@@ -1,7 +1,7 @@
 ﻿//******************************************************************************************************
 //  PluginManager.cs - Gbtc
 //
-//  Copyright © 2015, James Ritchie Carroll.  All Rights Reserved.
+//  Copyright © 2016, James Ritchie Carroll.  All Rights Reserved.
 //  MIT License (MIT)
 //
 //  Code Modification History:
@@ -102,20 +102,20 @@ namespace AlexaDoPlugin
                                 }
                                 else
                                 {
-                                    ShowNotification(string.Format("Failed to load AlexaDo plug-in command \"{0}\" from \"{1}\": {2} is not derived from AlexaDoPluginBase", command.Description, commandsDefintionFile, command.Action.TypeName), ToolTipIcon.Error);
+                                    ShowNotification($"Failed to load AlexaDo plug-in command \"{command.Description}\" from \"{commandsDefintionFile}\": {command.Action.TypeName} is not derived from AlexaDoPluginBase", ToolTipIcon.Error);
                                 }
                             }
                             catch (Exception ex)
                             {
                                 // Catch failure to load command assembly or create plug-in instance
-                                ShowNotification(string.Format("Failed to load AlexaDo plug-in command \"{0}\" from \"{1}\": {2}", command.Description, commandsDefintionFile, ex.Message), ToolTipIcon.Error);
+                                ShowNotification($"Failed to load AlexaDo plug-in command \"{command.Description}\" from \"{commandsDefintionFile}\": {ex.Message}", ToolTipIcon.Error);
                             }
                         }
                     }
                     catch (Exception ex)
                     {
                         // Catch failure to parse commands definition XML
-                        ShowNotification(string.Format("Failed to load AlexaDo plug-in commands from \"{0}\": {1}", commandsDefintionFile, ex.Message), ToolTipIcon.Error);
+                        ShowNotification($"Failed to load AlexaDo plug-in commands from \"{commandsDefintionFile}\": {ex.Message}", ToolTipIcon.Error);
                     }
                 }
 
@@ -139,7 +139,7 @@ namespace AlexaDoPlugin
                             }
                             catch (Exception ex)
                             {
-                                ShowNotification(string.Format("Failed to initialize AlexaDo plug-in command \"{0}\" [{1}]: {2}", plugin.Command.Description, plugin.GetType().FullName, ex.Message), ToolTipIcon.Error);
+                                ShowNotification($"Failed to initialize AlexaDo plug-in command \"{plugin.Command.Description}\" [{plugin.GetType().FullName}]: {ex.Message}", ToolTipIcon.Error);
                             }
                         }
 
@@ -158,7 +158,7 @@ namespace AlexaDoPlugin
             {
                 // Catch any other exceptions
                 m_plugins = new AlexaDoPluginBase[0];
-                ShowNotification(string.Format("Failed to load AlexaDo plug-ins: {0}", ex.Message), ToolTipIcon.Error, forceDisplay: true);
+                ShowNotification($"Failed to load AlexaDo plug-ins: {ex.Message}", ToolTipIcon.Error, forceDisplay: true);
             }
         }
 
@@ -169,13 +169,7 @@ namespace AlexaDoPlugin
         /// <summary>
         /// Gets reference to collection of loaded AlexaDo plug-ins.
         /// </summary>
-        public ReadOnlyCollection<AlexaDoPluginBase> Plugins
-        {
-            get
-            {
-                return new ReadOnlyCollection<AlexaDoPluginBase>(m_plugins);
-            }
-        }
+        public ReadOnlyCollection<AlexaDoPluginBase> Plugins => new ReadOnlyCollection<AlexaDoPluginBase>(m_plugins);
 
         #endregion
 
