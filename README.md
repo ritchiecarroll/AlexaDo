@@ -11,7 +11,7 @@ Note that the Google Responder is the only plug-in that is automatically enabled
 
 ## Installation
 
-Download the installers zip file, version 1.0.0.4 (<a href="#versions">versions</a>):
+Download the installers zip file, version 1.0.0.5 (<a href="#versions">versions</a>):
 
 &nbsp;&nbsp;&nbsp; **_[Setup.zip](https://raw.github.com/ritchiecarroll/AlexaDo/master/Setup.zip)_**
 
@@ -77,3 +77,30 @@ Example: _MyIftttHandler.commands_
 ## Versions
 1.0.0.3 - 5/20/2015 - Initial release with installation package.<br>
 1.0.0.4 - 5/26/2015 - Posted a fix for writing processed activity cache with non-admin rights.
+1.0.0.5 - 12/1/2016 - Updated to work with more recent versions of alexa.amazon.com.
+
+## Updates
+
+Recent changes require WebBrowser control to be used to get JSON responses from activities API,
+in order to get JSON to be displayed instead of downloaded, the following registry settings need
+to be applied:
+```
+Windows Registry Editor Version 5.00
+;
+; Tell IE to open JSON documents in the browser.  
+; 25336920-03F9-11cf-8FD0-00AA00686F13 is the CLSID for the "Browse in place" .
+;  
+
+[HKEY_CLASSES_ROOT\MIME\Database\Content Type\application/json]
+"CLSID"="{25336920-03F9-11cf-8FD0-00AA00686F13}"
+"Encoding"=hex:08,00,00,00
+
+[HKEY_CLASSES_ROOT\MIME\Database\Content Type\application/x-json]
+"CLSID"="{25336920-03F9-11cf-8FD0-00AA00686F13}"
+"Encoding"=hex:08,00,00,00
+
+[HKEY_CLASSES_ROOT\MIME\Database\Content Type\text/json]
+"CLSID"="{25336920-03F9-11cf-8FD0-00AA00686F13}"
+"Encoding"=hex:08,00,00,00
+```
+Save the registry settings to a file with a `.reg` suffix and import using `RegEdit` tool.

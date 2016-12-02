@@ -14,9 +14,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Net;
-using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 using AlexaDoPlugin;
@@ -42,6 +39,8 @@ namespace AlexaDo
         private readonly EchoMonitor m_echoMonitor;
         private readonly PluginManager m_pluginManager;
         private HashSet<EchoActivity> m_processedActivities;
+        private bool m_navigationComplete;
+        private bool m_applicationClosing;
         private long m_totalQueries;
         private int m_processing;
         private bool m_disposed;
@@ -58,6 +57,10 @@ namespace AlexaDo
         {
             m_echoMonitor = echoMonitor;
             m_pluginManager = new PluginManager(ShowNotification, echoMonitor.BeginInvoke);
+
+            // Attach to needed events
+            m_echoMonitor.FormClosing += m_echoMonitor_FormClosing;
+            m_echoMonitor.BrowserControl.DocumentCompleted += BrowserControl_DocumentCompleted;
         }
 
         #endregion
@@ -149,28 +152,29 @@ namespace AlexaDo
                         processedCacheUpdated = true;
                     }
 
-                    string activities;
+                    //// Have to use WebClient to get JSON data, WebBrowser control tries to download it to a file
+                    //// prompting UI for a file name - may be able to intercept this using ActiveX API, but the
+                    //// following seems to work OK and allows operation on another thread:
+                    //using (WebClient client = new WebClient())
+                    //{
+                    //    const string url = Settings.BaseURL + Settings.ActivitiesAPI + Settings.QueryTopFiveActivities;
+                    //    uint datasize = 32768;
 
-                    // Have to use WebClient to get JSON data, WebBrowser control tries to download it to a file
-                    // prompting UI for a file name - may be able to intercept this using ActiveX API, but the
-                    // following seems to work OK and allows operation on another thread:
-                    using (WebClient client = new WebClient())
-                    {
-                        const string url = Settings.BaseURL + Settings.ActivitiesAPI + Settings.QueryTopFiveActivities;
-                        uint datasize = 32768;
+                    //    StringBuilder cookieData = new StringBuilder((int)datasize);
 
-                        StringBuilder cookieData = new StringBuilder((int)datasize);
+                    //    // Pass authentication data in WebBrowser cookies along to WebClient
+                    //    if (InternetGetCookie(url, null, cookieData, ref datasize) && cookieData.Length > 0)
+                    //        client.Headers.Add(HttpRequestHeader.Cookie, cookieData.ToString());
 
-                        // Pass authentication data in WebBrowser cookies along to WebClient
-                        if (InternetGetCookie(url, null, cookieData, ref datasize) && cookieData.Length > 0)
-                            client.Headers.Add(HttpRequestHeader.Cookie, cookieData.ToString());
+                    //    // Make sure we look like the same browser that started the session
+                    //    client.Headers[HttpRequestHeader.UserAgent] = Settings.UserAgent;
 
-                        // Make sure we look like the same browser that started the session
-                        client.Headers[HttpRequestHeader.UserAgent] = Settings.UserAgent;
+                    //    // Download the JSON Echo Activities data
+                    //    activities = Encoding.UTF8.GetString(client.DownloadData(url));
+                    //}
 
-                        // Download the JSON Echo Activities data
-                        activities = Encoding.UTF8.GetString(client.DownloadData(url));
-                    }
+                    // Download the JSON Echo Activities data
+                    string activities = Navigate(Settings.BaseURL + Settings.ActivitiesAPI + Settings.QueryTopFiveActivities);
 
                     if (!string.IsNullOrEmpty(activities))
                     {
@@ -382,6 +386,30 @@ namespace AlexaDo
             m_echoMonitor.BeginInvoke((Action<string, object[]>)m_echoMonitor.UpdateStatus, message, args);
         }
 
+        // Navigates to a URL and waits until document is loaded.
+        private string Navigate(string url)
+        {
+            m_navigationComplete = false;
+            m_echoMonitor.BrowserControl.Navigate(url, null, null, "User-Agent: " + Settings.UserAgent);
+
+            while (!m_navigationComplete && !m_applicationClosing)
+                Application.DoEvents();
+
+            return m_echoMonitor.BrowserControl.DocumentText;
+        }
+
+        private void m_echoMonitor_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            // Cancel any pending navigation waiters when application is exiting - note that the UserClosing
+            // reason is an exception since this just minimizes application to the task area
+            m_applicationClosing = e.CloseReason != CloseReason.UserClosing;
+        }
+
+        private void BrowserControl_DocumentCompleted(object sender, WebBrowserDocumentCompletedEventArgs e)
+        {
+            m_navigationComplete = true;
+        }
+
         #endregion
 
         #region [ Static ]
@@ -390,8 +418,8 @@ namespace AlexaDo
         private static readonly ILog Log = LogManager.GetLogger(typeof(ActivityProcessor));
 
         // Static Methods
-        [DllImport("wininet.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        private static extern bool InternetGetCookie(string lpszUrl, string lpszCookieName, StringBuilder lpszCookieData, ref uint lpdwSize);
+        //[DllImport("wininet.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        //private static extern bool InternetGetCookie(string lpszUrl, string lpszCookieName, StringBuilder lpszCookieData, ref uint lpdwSize);
 
         #endregion
     }

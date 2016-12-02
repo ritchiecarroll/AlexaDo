@@ -57,11 +57,11 @@ namespace AlexaDoPlugin
         private const string DefaultEndKeyWord = "Stop";
 
         // Static Fields
-        private readonly static string s_userAgent;
-        private readonly static int s_queryInterval;
-        private readonly static double s_timeTolerance;
-        private readonly static string s_startKeyWord;
-        private readonly static string s_endKeyWord;
+        private static readonly string s_userAgent;
+        private static readonly int s_queryInterval;
+        private static readonly double s_timeTolerance;
+        private static readonly string s_startKeyWord;
+        private static readonly string s_endKeyWord;
         private static bool s_authenticated;
         private static bool s_ttsFeedbackEnabled;
 
@@ -75,16 +75,16 @@ namespace AlexaDoPlugin
             // if application is installed into Program Files folder, default location, the AlexaDo.exe.config
             // file can only be updated when application is run with elevated privileges.
             systemSettings.Add("UserAgent", "", "Browser User-Agent to use when authenticating", false, SettingScope.Application);
-            systemSettings.Add("QueryInterval", "3", "Echo activity query interval, in seconds (integer)", false, SettingScope.Application);
-            systemSettings.Add("TimeTolerance", "30.0", "Echo activity time processing tolerance, in seconds (floating-point)", false, SettingScope.Application);
+            systemSettings.Add("QueryInterval", "0.5", "Echo activity query interval, in seconds (floating-point)", false, SettingScope.Application);
+            systemSettings.Add("TimeTolerance", "45.0", "Echo activity time processing tolerance, in seconds (floating-point)", false, SettingScope.Application);
             systemSettings.Add("StartKeyWord", "", "Key word to recognize at start of command, defaults to Simon Says", false, SettingScope.Application);
             systemSettings.Add("EndKeyWord", "", "Key word to recognize at end of command, defaults to Stop", false, SettingScope.Application);
             systemSettings.Add("TTSSpeed", "0", "Speech rate to use for TTS engine (-10 to 10)", false, SettingScope.Application);
 
             // Get current settings
             s_userAgent = systemSettings["UserAgent"].Value.ToNonNullNorWhiteSpace(DefaultUserAgent);
-            s_queryInterval = systemSettings["QueryInterval"].ValueAs(3) * 1000;
-            s_timeTolerance = systemSettings["TimeTolerance"].ValueAs(30.0);
+            s_queryInterval = (int)(systemSettings["QueryInterval"].ValueAs(0.5D) * 1000.0D);
+            s_timeTolerance = systemSettings["TimeTolerance"].ValueAs(45.0D);
             s_startKeyWord = systemSettings["StartKeyWord"].Value.ToNonNullNorWhiteSpace(DefaultStartKeyWord);
             s_endKeyWord = systemSettings["EndKeyWord"].Value.ToNonNullNorWhiteSpace(DefaultEndKeyWord);
 
