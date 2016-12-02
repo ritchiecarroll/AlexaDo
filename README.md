@@ -76,7 +76,7 @@ Example: _MyIftttHandler.commands_
 <a name="versions" id="versions"></a>
 ## Versions
 1.0.0.3 - 5/20/2015 - Initial release with installation package.<br>
-1.0.0.4 - 5/26/2015 - Posted a fix for writing processed activity cache with non-admin rights.
+1.0.0.4 - 5/26/2015 - Posted a fix for writing processed activity cache with non-admin rights.<br>
 1.0.0.5 - 12/1/2016 - Updated to work with more recent versions of alexa.amazon.com.
 
 ## Updates
