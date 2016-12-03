@@ -41,7 +41,8 @@
           </Feature>
         </Feature>
 
-        <ComponentRef Id="Cleanup" />
+      <ComponentRef Id="Registry"/>
+      <ComponentRef Id="Cleanup" />
     </Feature>
 
     <!-- User Interface -->
@@ -93,7 +94,25 @@
       <Component Id="AlexaDoConfig">
         <File Id="AlexaDo.exe.config" Name="$(var.AlexaDo.TargetFileName).config" Source="$(var.AlexaDo.TargetPath).config" />
       </Component>
-
+      
+      <!-- Registry Settings -->
+      <Component Id="Registry" Guid="{cd3feb8a-19f4-44bb-8849-439ea5245ee6}">
+        <RegistryKey Id="REG_MimeType" Root="HKCR" Key="MIME\Database\Content Type" ForceCreateOnInstall="yes">
+          <RegistryKey Id="REG_MimeType.application.json" Key="application/json" ForceCreateOnInstall="yes">
+            <RegistryValue Id="REG_MimeType.application.json.clsid" Name="CLSID" Value="{25336920-03F9-11cf-8FD0-00AA00686F13}" Type="string" />
+            <RegistryValue Id="REG_MimeType.application.json.encoding" Name="Encoding" Value="08000000" Type="binary" />
+          </RegistryKey>
+          <RegistryKey Id="REG_MimeType.application.x.json" Key="application/x-json" ForceCreateOnInstall="yes">
+            <RegistryValue Id="REG_MimeType.application.x.json.clsid" Name="CLSID" Value="{25336920-03F9-11cf-8FD0-00AA00686F13}" Type="string" />
+            <RegistryValue Id="REG_MimeType.application.x.json.encoding" Name="Encoding" Value="08000000" Type="binary" />
+          </RegistryKey>
+          <RegistryKey Id="REG_MimeType.application.text.json" Key="text/json" ForceCreateOnInstall="yes">
+            <RegistryValue Id="REG_MimeType.application.text.json.clsid" Name="CLSID" Value="{25336920-03F9-11cf-8FD0-00AA00686F13}" Type="string" />
+            <RegistryValue Id="REG_MimeType.application.text.json.encoding" Name="Encoding" Value="08000000" Type="binary" />
+          </RegistryKey>
+        </RegistryKey>
+      </Component>
+      
       <!-- Cleanup -->
       <Component Id="Cleanup" Guid="{E4A3FC2E-4D4C-4A9B-A1D5-1B95BBC33E90}">
         <CreateFolder />
