@@ -15,7 +15,7 @@ This is a plug-in based application that will monitor activities spoken to the A
 1. "OK Google Responder" - allows commands like "__Alexa Google How old is George Washington Stop__"
 2. "E-mail Me" - when configured with a mailer like "[mailsend](http://github.com/muquit/mailsend)" allows commands like "__Alexa Simon Says email me feed the dog when I get home__"
 
-Note that the Google Responder is the only plug-in that is automatically enabled. This plug-in will "speak" the OK Google results in the Google voice back through the Amazon Echo if the computer is connected to the Echo via Bluetooth. Note that this uses Chrome and the settings may need to be updated to enable "OK Google" to start a voice search to ensure audio feedback works.  Other plug-ins can use Windows based text-to-speech (TTS) for responses to triggered actions. There is also a "FrontPoint Security" plug-in included, however work on this adapter is still in progress.
+Note that the Google Responder is the only plug-in that is automatically enabled. This plug-in will "speak" the OK Google results in the Google voice back through the Amazon Echo if the computer is connected to the Echo via Bluetooth. Note that this uses Chrome and the settings may need to be updated to enable "OK Google" to start a voice search to ensure audio feedback works.  Other plug-ins can use Windows based text-to-speech (TTS) for responses to triggered actions. ~~There is also a "FrontPoint Security" plug-in included, however work on this adapter is still in progress.~~
 
 ## Installation
 
