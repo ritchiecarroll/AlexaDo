@@ -1,6 +1,14 @@
 # AlexaDo ![AlexaDo](https://raw.github.com/ritchiecarroll/AlexaDo/master/images/logo.png)
 Amazon Echo Invocation Plug-in Application
-C# / .NET 4.5
+C# / .NET 4.6
+
+## Project Status
+
+This project was developed before Amazon released an offical SDK for interacting with the Echo. Since Amazon now has an excellent [Alexa skills development kit](https://developer.amazon.com/alexa-skills-kit), I would certainly recommend using the official SDK for any new Alexa development.
+
+I have, however, recently updated this tool (12/3/2016) to make sure it still works as expected with recent changes to the `alexa.amazon.com` web site. I will continue to leave this project up as an example of how you can do simple Alexa integrations, e.g., getting Alexa to spawn your own application or as a model for playing around with the cards API that is part of the Alexa application home page -- plus it's really still just fun to ask _`Alexa, Simon Says Google How old is Barack Obama?`_ then just have her repeat the question and hear Google respond through her speakers :-)
+
+## About
 
 This is a plug-in based application that will monitor activities spoken to the Amazon Echo, listen for key phrases then dispatch plug-in based actions based on what was heard. New plug-ins can be written in C# and configured through an XML based "commands" definition file. Included with the installation is an "AppLauncher" plug-in with two sample command definitions ([view source](https://github.com/ritchiecarroll/AlexaDo/blob/master/src/Plugins/AppLauncher/AppLauncher.commands)):
 
@@ -11,9 +19,9 @@ Note that the Google Responder is the only plug-in that is automatically enabled
 
 ## Installation
 
-Download the installers zip file, version 1.0.0.5 (<a href="#versions">versions</a>):
+Download the installers zip file (<a href="#versions">versions</a>):
 
-&nbsp;&nbsp;&nbsp; **_[Setup.zip](https://raw.github.com/ritchiecarroll/AlexaDo/master/Setup.zip)_**
+&nbsp;&nbsp;&nbsp; **_[Releases](https://github.com/ritchiecarroll/AlexaDo/releases)_**
 
 Unzip files and run the proper __Setup.msi__ for your target OS platform, i.e., 32-bit or 64-bit.
 
@@ -35,7 +43,7 @@ Having trouble? Check the AlexaDo log file: %APPDATA%\AlexaDo\AlexaDo.log
 
 Note that this application attempts to attach to the Amazon WebSocket socket used to monitor cards for quick and dynamic response (see [piettes.com/echo forum](http://www.piettes.com/echo/viewtopic.php?f=3&t=10) for info on how this works). If the application fails to attach to the WebSocket, it will fall back on polling activities on an interval.
 
-In order to process text-to-speech feedback through Bluetooth, this application must currently be run inside of an active Windows session. It may be possible to change this application to run as a Windows service, but this is generally more work than I would like to tackle for a toy-project at the moment. Perhaps Amazon will open the Echo SDK such to allow Alexa to "say" something, if this happens, changing this application to run as service would be easier.
+In order to process text-to-speech feedback through Bluetooth, this application must currently be run inside of an active Windows session. It may be possible to change this application to run as a Windows service, but this is generally more work than I would like to tackle for a toy-project at the moment. ~~Perhaps Amazon will open the Echo SDK such to allow Alexa to "say" something, if this happens, changing this application to run as service would be easier.~~ 
 
 ## Writing Plug-ins
 
@@ -79,11 +87,9 @@ Example: _MyIftttHandler.commands_
 1.0.0.4 - 5/26/2015 - Posted a fix for writing processed activity cache with non-admin rights.<br>
 1.0.0.7 - 12/3/2016 - Updated to work with more recent versions of alexa.amazon.com.
 
-## Updates
+## Developer Notes
 
-Recent changes require WebBrowser control to be used to get JSON responses from activities API,
-in order to get JSON to be displayed instead of downloaded, the following registry settings need
-to be applied - note that the installer will apply these automatically.
+Because of recent changes in the Amazon authenticaion layer, the WebBrowser control must now be used to get JSON responses from activities API\*. Since this control is based on Internet Explorer and the default IE action for receiving a JSON response is to download it, this doesn't work well for automation activities -- it's not very useful to engage the user to download a file at the UI layer during automated voice responses :-p. In order to get IE, and hence the WebBrowser control, to simply display received JSON responses (like it does with a text file) instead of downloading them, the following registry settings need to be applied. Note that if you install then application, the setup package will take care of this change for you - otherwise, you will need to apply these registry changes manually in order to run this project in debug mode:
 ```
 Windows Registry Editor Version 5.00
 ;
@@ -103,4 +109,6 @@ Windows Registry Editor Version 5.00
 "CLSID"="{25336920-03F9-11cf-8FD0-00AA00686F13}"
 "Encoding"=hex:08,00,00,00
 ```
-Save the registry settings to a file with a `.reg` suffix and import using `RegEdit` tool.
+To apply manually, save the above registry settings to a file with a `.reg` suffix and import using the `RegEdit` tool - you can usually just double click on the `.reg.` file to import the keys.
+
+\* FYI, you used to be able just pass along cookies acquired from the WebBrowser control after authentication to a WebClient instance and everything would still work fine, but Amazon security is obviously getting better ;-)
