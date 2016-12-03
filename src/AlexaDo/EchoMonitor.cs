@@ -16,6 +16,7 @@ using System.Configuration;
 using System.Drawing;
 using System.Linq;
 using System.Speech.Synthesis;
+using System.Threading;
 using System.Windows.Forms;
 using AlexaDoPlugin;
 using GSF.Configuration;
@@ -167,7 +168,7 @@ namespace AlexaDo
 
         private void QueryTimer_Tick(object sender, EventArgs e)
         {
-            TryProcessActivities();
+            QueueProcessActivities();
         }
 
         private void TestCommandButton_ButtonClick(object sender, EventArgs e)
@@ -288,25 +289,23 @@ namespace AlexaDo
             Hide();
         }
 
-        internal void TryProcessActivities()
-        {
-            if ((object)m_activityProcessor == null)
-                return;
-
+        // This function should normally be called from the thread pool..
+        internal void QueueProcessActivities()
+        {            
             try
             {
-                // TODO: Only reauth after multiple failures
-                m_activityProcessor.ProcessActivities();
+                bool pending = m_activityProcessor?.ProcessActivities() ?? false;
 
-                // If did not process activities, retry authentication
-                //if (!m_activityProcessor.ProcessActivities())
-                //    Reauthenticate(false);
+                // There may be several activities for a single voice command, e.g., one for Alexa and another for the speech heard, so
+                // wait a half-second or so before kicking off activity processing
+                if (pending)
+                    Thread.Sleep(500);
 
                 BeginInvoke((Action)UpdateTaskbarTooltip);
             }
             catch (Exception ex)
             {
-                Log.Error("TryProcessActivities Exception", ex);
+                Log.Error("QueueProcessActivities Exception", ex);
             }
         }
 
@@ -331,8 +330,7 @@ namespace AlexaDo
 
             QueryTimer.Enabled = false;
 
-            if ((object)m_authenticationManager != null)
-                m_authenticationManager.Authenticate(requestCredentials);
+            m_authenticationManager?.Authenticate(requestCredentials);
         }
 
         private void SelectVoice(string voiceName)

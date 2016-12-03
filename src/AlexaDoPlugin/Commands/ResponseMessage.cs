@@ -106,7 +106,7 @@ namespace AlexaDoPlugin.Commands
                     }
                     catch (Exception ex)
                     {
-                        Log.WarnFormat("Failed to playback Wave response \"{0}\": {1}", m_fileName, ex.Message);
+                        Log.WarnFormat($"Failed to playback Wave response \"{m_fileName}\": {ex.Message}");
 
                         // Fall back on TTS response string if Wave file cannot be played
                         if (!string.IsNullOrWhiteSpace(responseValue) && Settings.TTSFeedbackEnabled)

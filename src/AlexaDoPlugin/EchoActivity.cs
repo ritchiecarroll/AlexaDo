@@ -112,10 +112,7 @@ namespace AlexaDoPlugin
         /// </returns>
         public override int GetHashCode()
         {
-            if (string.IsNullOrEmpty(ID))
-                return 0;
-
-            return ID.GetHashCode();
+            return string.IsNullOrEmpty(ID) ? 0 : ID.GetHashCode();
         }
 
         /// <summary>

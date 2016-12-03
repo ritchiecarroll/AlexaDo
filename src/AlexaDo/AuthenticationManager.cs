@@ -19,7 +19,6 @@ using System.Windows.Forms;
 using AlexaDoPlugin;
 using GSF;
 using GSF.Configuration;
-using GSF.Threading;
 using log4net;
 
 namespace AlexaDo
@@ -38,7 +37,6 @@ namespace AlexaDo
 
         // Fields
         private readonly EchoMonitor m_echoMonitor;
-        private readonly ShortSynchronizedOperation m_processActivites;
         private readonly CategorizedSettingsElementCollection m_userSettings;
         private SHDocVw.WebBrowser m_activeXReference;
         private Dictionary<string, string> m_lastPostData;
@@ -58,7 +56,6 @@ namespace AlexaDo
         public AuthenticationManager(EchoMonitor echoMonitor)
         {
             m_echoMonitor = echoMonitor;
-            m_processActivites = new ShortSynchronizedOperation(ProcessNewActivities);
             m_lastPostData = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             // Make sure default user settings exist
@@ -86,7 +83,7 @@ namespace AlexaDo
             catch (Exception ex)
             {
                 // Any possible failure here would not be fatal to overall operation
-                Log.ErrorFormat("Failed to register for low level navigation event, login credentials will not be cached: {0}", ex.Message);
+                Log.Error($"Failed to register for low level navigation event, login credentials will not be cached: {ex.Message}");
             }
         }
 
@@ -201,7 +198,7 @@ namespace AlexaDo
                     }
                     catch
                     {
-                        // We just clear the cache for any failures to get credentials, e.g, failure to decrypt
+                        // We just clear the cache for any failures to get credentials, e.g, failure to decrypt cached credentials
                         ClearCredentials();
                         userName = "";
                         password = "";
@@ -233,7 +230,7 @@ namespace AlexaDo
                     if (m_applicationClosing)
                         break;
 
-                    // Arrival at echo.amazon.com indicates successful authentication
+                    // Assuming that arrival at alexa.amazon.com indicates successful authentication
                     // TODO: Check for more reliable way to validate authentication - URL's could change in the future...
                     if ((object)doc.Url != null && doc.Url.Host.Equals("alexa.amazon.com", StringComparison.OrdinalIgnoreCase))
                     {
@@ -243,7 +240,7 @@ namespace AlexaDo
 
                             try
                             {
-                                // Cache credentials for future logins (will be encrypted)
+                                // Cache credentials for future logins (values will be encrypted and stored in user's appdata folder)
                                 if (m_lastPostData.TryGetValue("email", out userName))
                                     m_userSettings["UserName"].Value = userName;
 
@@ -280,7 +277,7 @@ namespace AlexaDo
                             if (m_automatedLoginAttempts < 5)
                             {
                                 // Retry automated authentication a few times, maybe data connection is not available at the moment
-                                ShowNotification($"Failed to authenticate, trying again in {m_echoMonitor.QueryTimer.Interval / 1000:N0} seconds.", ToolTipIcon.Warning);
+                                ShowNotification("Failed to authenticate, trying again in 5 seconds.", ToolTipIcon.Warning);
 
                                 // Pause 5 seconds between automated authentication attempts
                                 DateTime waitTime = DateTime.UtcNow.AddSeconds(5.0);
@@ -361,13 +358,12 @@ namespace AlexaDo
             // TODO: Maybe want to still use timer to query process activities, although on a longer interval, to make sure user session doesn't expire
             if ((object)doc != null && (object)doc.Body != null)
             {
-                HtmlElement body = doc.GetElementsByTagName("body")[0];
                 HtmlElement script = doc.CreateElement("script");
 
                 if ((object)script != null)
                 {
                     script.SetAttribute("text", activityMonitorScript);
-                    body.AppendChild(script);
+                    doc.Body?.AppendChild(script);
                     response = doc.InvokeScript("startMonitor");
                 }
             }
@@ -466,19 +462,7 @@ namespace AlexaDo
 
         private void scriptInterface_ReceivedEchoActivity(object sender, EventArgs e)
         {
-            // Queue up operation for asynchronous execution and return control to Browser script asap.
-            // May get multiple activity notifications in quick succession, so only invoke operation once,
-            // subsequent calls will be marked as pending and one extra call will be made upon primary
-            // call completion to make sure no activities miss processing.
-            m_processActivites.RunOnceAsync();
-        }
-
-        private void ProcessNewActivities()
-        {
-            // There may be several activities for a single voice command, e.g., one for Alexa and another for the speech heard, so
-            // wait a half-second or so before kicking off activity processing
-            Thread.Sleep(500);
-            m_echoMonitor.TryProcessActivities();
+            ThreadPool.QueueUserWorkItem(state => m_echoMonitor.QueueProcessActivities());
         }
 
         private void m_echoMonitor_FormClosing(object sender, FormClosingEventArgs e)
@@ -497,6 +481,7 @@ namespace AlexaDo
         {
             try
             {
+                // Grab post data so that we can cache credentials between runs...
                 byte[] data = PostData as byte[];
 
                 if ((object)data != null && data.Length > 0)
@@ -506,7 +491,7 @@ namespace AlexaDo
             {
                 // Need post data to cache user credentials between runs, if this fails it's not the end of the world,
                 // it just means the user will need to login each time the application runs
-                Log.ErrorFormat("Failed to get post data, login credentials cannot be cached: {0}", ex.Message);
+                Log.Error($"Failed to get post data, login credentials cannot be cached: {ex.Message}");
                 m_lastPostData.Clear();
             }
         }

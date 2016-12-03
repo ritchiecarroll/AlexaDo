@@ -62,7 +62,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
     <None Include="FrontPointSecurity.commands">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

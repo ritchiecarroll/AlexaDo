@@ -19,6 +19,7 @@ using System.Windows.Forms;
 using AlexaDoPlugin;
 using GSF;
 using GSF.IO;
+using GSF.Threading;
 using GSF.Units;
 using Json;
 using log4net;
@@ -38,6 +39,7 @@ namespace AlexaDo
         // Fields
         private readonly EchoMonitor m_echoMonitor;
         private readonly PluginManager m_pluginManager;
+        private readonly ShortSynchronizedOperation m_processActivites;
         private HashSet<EchoActivity> m_processedActivities;
         private bool m_navigationComplete;
         private bool m_applicationClosing;
@@ -57,6 +59,7 @@ namespace AlexaDo
         {
             m_echoMonitor = echoMonitor;
             m_pluginManager = new PluginManager(ShowNotification, echoMonitor.BeginInvoke);
+            m_processActivites = new ShortSynchronizedOperation(ProcessNewActivities);
 
             // Attach to needed events
             m_echoMonitor.FormClosing += m_echoMonitor_FormClosing;
@@ -70,17 +73,7 @@ namespace AlexaDo
         /// <summary>
         /// Total Echo activity queries.
         /// </summary>
-        public long TotalQueries
-        {
-            get
-            {
-                return m_totalQueries;
-            }
-            set
-            {
-                m_totalQueries = value;
-            }
-        }
+        public long TotalQueries => m_totalQueries;
 
         #endregion
 
@@ -106,10 +99,7 @@ namespace AlexaDo
                 try
                 {
                     if (disposing)
-                    {
-                        if ((object)m_pluginManager != null)
-                            m_pluginManager.Dispose();
-                    }
+                        m_pluginManager?.Dispose();
                 }
                 finally
                 {
@@ -121,128 +111,108 @@ namespace AlexaDo
         /// <summary>
         /// Processes current activities.
         /// </summary>
-        /// <returns>Returns <c>true</c> if processing succeeded; otherwise, <c>false</c>.</returns>
-        /// <threading>
-        /// This method is safe to be called from a non-UI thread. Feedback for UI elements is handled
-        /// with a BeginInvoke call to queue activity on main message loop. Function is thread-safe from
-        /// the perspective that only one call will ever be processing a set of activities at once.
-        /// </threading>
         public bool ProcessActivities()
         {
-            // Make sure to only process one activity query at a time, query timer interval set too small?
+            m_processActivites.RunOnce();
+            return m_processActivites.IsPending;
+        }
+
+        private void ProcessNewActivities()
+        {
+            if (!Settings.Authenticated)
+                return;
+
+            // Make sure to only process one activity query at a time - even if testing
             if (Thread.VolatileRead(ref m_processing) != 0)
-                return false;
+                return;
+
+            Interlocked.Exchange(ref m_processing, 1);
 
             try
             {
-                Interlocked.Exchange(ref m_processing, 1);
+                Ticks startTime = DateTime.UtcNow;
+                UpdateStatus("Downloading Echo activity data...");
 
-                if (Settings.Authenticated)
+                string processedCacheFileName = Path.Combine(FilePath.GetApplicationDataFolder(), ProcessedActivitiesCacheFileName);
+                bool processedCacheUpdated = false;
+
+                // Deserialize processed activity cache from last run, if any
+                if ((object)m_processedActivities == null)
                 {
-                    Ticks startTime = DateTime.UtcNow;
-                    UpdateStatus("Downloading Echo activity data...");
+                    m_processedActivities = DeserializeProcessedActivitiesCache(processedCacheFileName);
+                    processedCacheUpdated = true;
+                }
 
-                    string processedCacheFileName = Path.Combine(FilePath.GetApplicationDataFolder(), ProcessedActivitiesCacheFileName);
-                    bool processedCacheUpdated = false;
+                // Download the JSON Echo Activities data
+                string activities = Navigate(Settings.BaseURL + Settings.ActivitiesAPI + Settings.QueryTopFiveActivities);
 
-                    // Deserialize processed activity cache from last run, if any
-                    if ((object)m_processedActivities == null)
+                if (!string.IsNullOrEmpty(activities))
+                {
+                    UpdateStatus("Parsing Echo activity data...");
+
+                    HashSet<EchoActivity> encounteredActivities = new HashSet<EchoActivity>();
+                    string status, id, command;
+                    DateTime time;
+
+                    dynamic json = JsonParser.Deserialize(activities);
+
+                    for (int i = 0; i < json.activities.Count; i++)
                     {
-                        m_processedActivities = DeserializeProcessedActivitiesCache(processedCacheFileName);
-                        processedCacheUpdated = true;
-                    }
+                        // Parse key activity elements
+                        Dictionary<string, object> activityElements = json.activities[i];
+                        status = activityElements["activityStatus"].ToString();
+                        time = new UnixTimeTag((decimal)(double.Parse(activityElements["creationTimestamp"].ToString()) * SI.Milli)).ToDateTime();
+                        id = activityElements["id"].ToString();
+                        command = ParseEchoSpeechSummary(activityElements["description"].ToString());
 
-                    //using (WebClient client = new WebClient())
-                    //{
-                    //    const string url = Settings.BaseURL + Settings.ActivitiesAPI + Settings.QueryTopFiveActivities;
-                    //    uint datasize = 32768;
+                        if (string.IsNullOrWhiteSpace(id) || string.IsNullOrWhiteSpace(status))
+                            continue;
 
-                    //    StringBuilder cookieData = new StringBuilder((int)datasize);
+                        EchoActivity activity = new EchoActivity(status, time, id, command);
 
-                    //    // Pass authentication data in WebBrowser cookies along to WebClient
-                    //    if (InternetGetCookie(url, null, cookieData, ref datasize) && cookieData.Length > 0)
-                    //        client.Headers.Add(HttpRequestHeader.Cookie, cookieData.ToString());
+                        encounteredActivities.Add(activity);
 
-                    //    // Make sure we look like the same browser that started the session
-                    //    client.Headers[HttpRequestHeader.UserAgent] = Settings.UserAgent;
-
-                    //    // Download the JSON Echo Activities data
-                    //    activities = Encoding.UTF8.GetString(client.DownloadData(url));
-                    //}
-
-                    // Download the JSON Echo Activities data
-                    string activities = Navigate(Settings.BaseURL + Settings.ActivitiesAPI + Settings.QueryTopFiveActivities);
-
-                    if (!string.IsNullOrEmpty(activities))
-                    {
-                        UpdateStatus("Parsing Echo activity data...");
-
-                        HashSet<EchoActivity> encounteredActivities = new HashSet<EchoActivity>();
-                        string status, id, command;
-                        DateTime time;
-
-                        dynamic json = JsonParser.Deserialize(activities);
-
-                        for (int i = 0; i < json.activities.Count; i++)
+                        if (!m_processedActivities.Contains(activity))
                         {
-                            // Parse key activity elements
-                            Dictionary<string, object> activityElements = json.activities[i];
-                            status = activityElements["activityStatus"].ToString();
-                            time = new UnixTimeTag((decimal)(double.Parse(activityElements["creationTimestamp"].ToString()) * SI.Milli)).ToDateTime();
-                            id = activityElements["id"].ToString();
-                            command = ParseEchoSpeechSummary(activityElements["description"].ToString());
-
-                            if (string.IsNullOrWhiteSpace(id) || string.IsNullOrWhiteSpace(status))
-                                continue;
-
-                            EchoActivity activity = new EchoActivity(status, time, id, command);
-
-                            encounteredActivities.Add(activity);
-
-                            if (!m_processedActivities.Contains(activity))
-                            {
-                                // Mark activity as processed
-                                m_processedActivities.Add(activity);
-                                processedCacheUpdated = true;
-
-                                // Only process activities that have occurred recently - note that
-                                // if local clock is way off, things may never get processed
-                                if (Math.Abs((DateTime.UtcNow - activity.Time).TotalSeconds) <= Settings.TimeTolerance)
-                                    ProcessActivity(activity);
-                            }
-
-                            // Possible optimization: if activities are always time-sorted, you can break out of loop early...
-                        }
-
-                        // Maintain processed Echo activity cache size
-                        HashSet<EchoActivity> expiredActivities = new HashSet<EchoActivity>();
-
-                        foreach (EchoActivity activity in m_processedActivities)
-                        {
-                            // If activity no longer appears in JSON list or is beyond time tolerance, mark activity for removal
-                            if (!encounteredActivities.Contains(activity))
-                                expiredActivities.Add(activity);
-                            else if (Math.Abs((DateTime.UtcNow - activity.Time).TotalSeconds) > Settings.TimeTolerance * 2)
-                                expiredActivities.Add(activity);
-                        }
-
-                        // Remove expired activities
-                        if (expiredActivities.Count > 0)
-                        {
+                            // Mark activity as processed
+                            m_processedActivities.Add(activity);
                             processedCacheUpdated = true;
 
-                            foreach (EchoActivity activity in expiredActivities)
-                                m_processedActivities.Remove(activity);
+                            // Only process activities that have occurred recently - note that
+                            // if local clock is way off, things may never get processed
+                            if (Math.Abs((DateTime.UtcNow - activity.Time).TotalSeconds) <= Settings.TimeTolerance)
+                                ProcessActivity(activity);
                         }
 
-                        // Serialize processed activities cache for future runs
-                        if (processedCacheUpdated)
-                            SerializeProcessedActivitiesCache(processedCacheFileName);
-
-                        UpdateStatus("Query {0:N0} processed {1:N0} Echo activities in {2}", ++m_totalQueries, encounteredActivities.Count, (DateTime.UtcNow.Ticks - startTime).ToElapsedTimeString(2));
+                        // Possible optimization: if activities are always time-sorted, you can break out of loop early...
                     }
 
-                    return true;
+                    // Maintain processed Echo activity cache size
+                    HashSet<EchoActivity> expiredActivities = new HashSet<EchoActivity>();
+
+                    foreach (EchoActivity activity in m_processedActivities)
+                    {
+                        // If activity no longer appears in JSON list or is beyond time tolerance, mark activity for removal
+                        if (!encounteredActivities.Contains(activity))
+                            expiredActivities.Add(activity);
+                        else if (Math.Abs((DateTime.UtcNow - activity.Time).TotalSeconds) > Settings.TimeTolerance * 2)
+                            expiredActivities.Add(activity);
+                    }
+
+                    // Remove expired activities
+                    if (expiredActivities.Count > 0)
+                    {
+                        processedCacheUpdated = true;
+
+                        foreach (EchoActivity activity in expiredActivities)
+                            m_processedActivities.Remove(activity);
+                    }
+
+                    // Serialize processed activities cache for future runs
+                    if (processedCacheUpdated)
+                        SerializeProcessedActivitiesCache(processedCacheFileName);
+
+                    UpdateStatus("Query {0:N0} processed {1:N0} Echo activities in {2}", ++m_totalQueries, encounteredActivities.Count, (DateTime.UtcNow.Ticks - startTime).ToElapsedTimeString(2));
                 }
             }
             catch (Exception ex)
@@ -253,8 +223,6 @@ namespace AlexaDo
             {
                 Interlocked.Exchange(ref m_processing, 0);
             }
-
-            return false;
         }
 
         /// <summary>
@@ -321,7 +289,7 @@ namespace AlexaDo
             {
                 UpdateStatus("Processing Echo activity [{0}]: {1} \"{2}\"", activity.Status, activity.ID, activity.Command);
                 int processed = m_pluginManager.ProcessActivity(activity);
-                Log.InfoFormat("{0:N0} plug-in{1} processed Echo activity [{2}]: {3} \"{4}\"", processed, processed == 1 ? "" : "s", activity.Status, activity.ID, activity.Command);
+                Log.Info($"{processed:N0} plug-in{(processed == 1 ? "" : "s")} processed Echo activity [{activity.Status}]: {activity.ID} \"{activity.Command}\"");
             }
         }
 
@@ -414,10 +382,34 @@ namespace AlexaDo
         // Static Fields
         private static readonly ILog Log = LogManager.GetLogger(typeof(ActivityProcessor));
 
-        // Static Methods
-        //[DllImport("wininet.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        //private static extern bool InternetGetCookie(string lpszUrl, string lpszCookieName, StringBuilder lpszCookieData, ref uint lpdwSize);
-
         #endregion
     }
 }
+
+#region [ Old Code ]
+
+// Passing existing cookies to WebClient no longer maintains authentication
+
+//using (WebClient client = new WebClient())
+//{
+//    const string url = Settings.BaseURL + Settings.ActivitiesAPI + Settings.QueryTopFiveActivities;
+//    uint datasize = 32768;
+
+//    StringBuilder cookieData = new StringBuilder((int)datasize);
+
+//    // Pass authentication data in WebBrowser cookies along to WebClient
+//    if (InternetGetCookie(url, null, cookieData, ref datasize) && cookieData.Length > 0)
+//        client.Headers.Add(HttpRequestHeader.Cookie, cookieData.ToString());
+
+//    // Make sure we look like the same browser that started the session
+//    client.Headers[HttpRequestHeader.UserAgent] = Settings.UserAgent;
+
+//    // Download the JSON Echo Activities data
+//    activities = Encoding.UTF8.GetString(client.DownloadData(url));
+//}
+
+// Static Methods
+//[DllImport("wininet.dll", CharSet = CharSet.Auto, SetLastError = true)]
+//private static extern bool InternetGetCookie(string lpszUrl, string lpszCookieName, StringBuilder lpszCookieData, ref uint lpdwSize);
+
+#endregion

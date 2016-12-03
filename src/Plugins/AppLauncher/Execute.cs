@@ -169,16 +169,12 @@ namespace AppLauncher
                     }
 
                     // Log execution state
-                    Log.InfoFormat("Executed \"{0}\" with parameters \"{1}\" - {2}, exit code: {3}",
-                        m_program,
-                        arguments.ToNonNullString(),
-                        timedOut ? $"application terminated after {m_timeout * SI.Milli} second timeout" : "application self-terminated",
-                        process.ExitCode);
+                    Log.Info($"Executed \"{m_program}\" with parameters \"{arguments.ToNonNullString()}\" - {(timedOut ? $"application terminated after {m_timeout * SI.Milli} second timeout" : "application self-terminated")}, exit code: {process.ExitCode}");
                 }
             }
             catch (Exception ex)
             {
-                Log.ErrorFormat("Error while waiting for process completion: {0}", ex.Message);
+                Log.Error($"Error while waiting for process completion: {ex.Message}");
             }
         }
 

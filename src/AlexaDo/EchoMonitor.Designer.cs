@@ -26,16 +26,13 @@ namespace AlexaDo
         /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
         {
-            if (disposing && (components != null))
+            if (disposing)
             {
-                components.Dispose();
-
-                if ((object)m_authenticationManager != null)
-                    m_authenticationManager.Dispose();
-
-                if ((object)m_activityProcessor != null)
-                    m_activityProcessor.Dispose();
+                components?.Dispose();
+                m_authenticationManager?.Dispose();
+                m_activityProcessor?.Dispose();
             }
+
             base.Dispose(disposing);
         }
 

@@ -50,7 +50,7 @@ namespace AlexaDoPlugin
         {
             // Get a logger specific to derived plug-in
             Log = LogManager.GetLogger(GetType());
-            Log.InfoFormat("Created a new {0} plug-in instance", GetType().FullName);
+            Log.Info($"Created a new {GetType().FullName} plug-in instance");
         }
 
         #endregion
@@ -147,7 +147,7 @@ namespace AlexaDoPlugin
                 try
                 {
                     if (disposing)
-                        Log.DebugFormat("{0} plug-instance is disposing", GetType().FullName);
+                        Log.Debug($"{GetType().FullName} plug-instance is disposing");
                 }
                 finally
                 {
@@ -219,10 +219,7 @@ namespace AlexaDoPlugin
         /// <returns><see cref="IAsyncResult"/> that represents the result of the BeginInvoke operation.</returns>
         protected IAsyncResult BeginInvoke(Delegate method, params object[] args)
         {
-            if ((object)m_beginInvokeFunction != null)
-                return m_beginInvokeFunction(method, args);
-
-            return null;
+            return m_beginInvokeFunction?.Invoke(method, args);
         }
 
         #endregion

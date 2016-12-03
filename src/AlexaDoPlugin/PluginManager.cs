@@ -98,7 +98,7 @@ namespace AlexaDoPlugin
 
                                     // Add loaded plug-in to list of plug-ins
                                     plugins.Add(plugin);
-                                    Log.InfoFormat("Loaded AlexaDo plug-in command \"{0}\" [{1}] from \"{2}\"", command.Description, plugin.GetType().FullName, commandsDefintionFile);
+                                    Log.Info($"Loaded AlexaDo plug-in command \"{command.Description}\" [{plugin.GetType().FullName}] from \"{commandsDefintionFile}\"");
                                 }
                                 else
                                 {
@@ -134,7 +134,7 @@ namespace AlexaDoPlugin
                             {
                                 Ticks startTime = DateTime.UtcNow.Ticks;
                                 plugin.Initialize();
-                                Log.InfoFormat("Initialized AlexaDo plug-in command \"{0}\" [{1}] - total time: {2}", plugin.Command.Description, plugin.GetType().FullName, (DateTime.UtcNow.Ticks - startTime).ToElapsedTimeString(2));
+                                Log.Info($"Initialized AlexaDo plug-in command \"{plugin.Command.Description}\" [{plugin.GetType().FullName}] - total time: {(DateTime.UtcNow.Ticks - startTime).ToElapsedTimeString(2)}");
 
                             }
                             catch (Exception ex)
@@ -143,7 +143,7 @@ namespace AlexaDoPlugin
                             }
                         }
 
-                        Log.InfoFormat("Initialization completed for all AlexaDo plug-ins - total time: {0}", (DateTime.UtcNow.Ticks - overAllStartTime).ToElapsedTimeString(2));
+                        Log.Info($"Initialization completed for all AlexaDo plug-ins - total time: {(DateTime.UtcNow.Ticks - overAllStartTime).ToElapsedTimeString(2)}");
                     });
 
                     initializePlugins.IsBackground = true;
@@ -240,7 +240,7 @@ namespace AlexaDoPlugin
                         if ((object)plugin.Command.Response != null && (object)plugin.Command.Response.Succeeded != null)
                             plugin.Command.Response.Succeeded.ProcessResponse();
 
-                        Log.InfoFormat("Successfully processed Echo activity [{0}]: {1} \"{2}\"", activity.Status, activity.ID, activity.Command);
+                        Log.Info($"Successfully processed Echo activity [{activity.Status}]: {activity.ID} \"{activity.Command}\"");
                         OnProcessedActivity(plugin, activity);
                     }
                     catch (Exception ex)
@@ -249,7 +249,7 @@ namespace AlexaDoPlugin
                         if ((object)plugin.Command.Response != null && (object)plugin.Command.Response.Failed != null)
                             plugin.Command.Response.Failed.ProcessResponse(ex.Message);
 
-                        Log.WarnFormat("Failed to processed Echo activity [{0}]: {1} \"{2}\" - {3}", activity.Status, activity.ID, activity.Command, ex.Message.ToNonNullString());
+                        Log.WarnFormat($"Failed to processed Echo activity [{activity.Status}]: {activity.ID} \"{activity.Command}\" - {ex.Message.ToNonNullString()}");
                     }
                 }
             }
@@ -264,8 +264,7 @@ namespace AlexaDoPlugin
         /// <param name="activity">The Echo activity that was successfully processed.</param>
         protected virtual void OnProcessedActivity(AlexaDoPluginBase source, EchoActivity activity)
         {
-            if ((object)ProcessedActivity != null)
-                ProcessedActivity(source, new EventArgs<EchoActivity>(activity));
+            ProcessedActivity?.Invoke(source, new EventArgs<EchoActivity>(activity));
         }
 
         private void ShowNotification(string message, ToolTipIcon icon = Settings.DefaultToolTipIcon, int timeout = Settings.DefaultToolTipTimeout, bool forceDisplay = false)
