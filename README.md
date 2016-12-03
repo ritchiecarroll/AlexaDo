@@ -83,7 +83,7 @@ Example: _MyIftttHandler.commands_
 
 Recent changes require WebBrowser control to be used to get JSON responses from activities API,
 in order to get JSON to be displayed instead of downloaded, the following registry settings need
-to be applied:
+to be applied - note that the installer will apply these automatically.
 ```
 Windows Registry Editor Version 5.00
 ;
