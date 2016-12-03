@@ -33,7 +33,7 @@ This only needs to be done once, the application will securely cache login crede
 
 <img src="https://raw.github.com/ritchiecarroll/AlexaDo/master/images/monitor.png" >
 
-On this screen you can watch as activities are triggered and change the desired TTS voice. If your Windows installation only has a single TTS voice, see [this article](https://forums.robertsspaceindustries.com/discussion/147385/voice-attack-getting-free-alternate-tts-voices-working-with-win7-8-64bit) to install more voices. Zira is the most similar to Alexa and is selected by default if it is installed.
+On this screen you can watch as activities are triggered and change the desired TTS voice. If your Windows installation only has a single TTS voice, see [this article](http://superuser.com/questions/590779/how-to-install-more-voices-to-windows-speech) to install more voices. Zira is the most similar to Alexa and is selected by default if it is installed.
 
 Commands will be triggered regardless of whether or not Alexa understands the spoken key phrases. However, for best results, it helps to prevent Alexa from trying to interpret the commands. For example, if you are not expecting immediate feedback from a command, you can always start the command with "Simon Says" and Alexa will repeat the command back to you. Another option is to end your commands with a clearly enunciated "Stop" which causes Alexa to cancel trying to interpret what you said and allowing any matched plug-ins to handle the command.
 
