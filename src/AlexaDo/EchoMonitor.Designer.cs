@@ -82,6 +82,7 @@ namespace AlexaDo
             this.AuthenticationBrowser.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.AuthenticationBrowser.MinimumSize = new System.Drawing.Size(30, 31);
             this.AuthenticationBrowser.Name = "AuthenticationBrowser";
+            this.AuthenticationBrowser.ScriptErrorsSuppressed = true;
             this.AuthenticationBrowser.Size = new System.Drawing.Size(1228, 839);
             this.AuthenticationBrowser.TabIndex = 2;
             this.AuthenticationBrowser.DocumentCompleted += new System.Windows.Forms.WebBrowserDocumentCompletedEventHandler(this.BrowserControl_DocumentCompleted);
@@ -95,6 +96,7 @@ namespace AlexaDo
             this.ActivityBrowser.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.ActivityBrowser.MinimumSize = new System.Drawing.Size(30, 31);
             this.ActivityBrowser.Name = "ActivityBrowser";
+            this.ActivityBrowser.ScriptErrorsSuppressed = true;
             this.ActivityBrowser.Size = new System.Drawing.Size(1228, 95);
             this.ActivityBrowser.TabIndex = 2;
             this.ActivityBrowser.DocumentCompleted += new System.Windows.Forms.WebBrowserDocumentCompletedEventHandler(this.BrowserControl_DocumentCompleted);

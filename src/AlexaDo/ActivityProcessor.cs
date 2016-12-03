@@ -126,10 +126,10 @@ namespace AlexaDo
             if (Thread.VolatileRead(ref m_processing) != 0)
                 return;
 
-            Interlocked.Exchange(ref m_processing, 1);
-
             try
             {
+                Interlocked.Exchange(ref m_processing, 1);
+
                 Ticks startTime = DateTime.UtcNow;
                 UpdateStatus("Downloading Echo activity data...");
 
