@@ -60,7 +60,7 @@ namespace AlexaDo
 
             // Attach to needed events
             m_echoMonitor.FormClosing += m_echoMonitor_FormClosing;
-            m_echoMonitor.BrowserControl.DocumentCompleted += BrowserControl_DocumentCompleted;
+            m_echoMonitor.ActivityBrowser.DocumentCompleted += BrowserControl_DocumentCompleted;
         }
 
         #endregion
@@ -152,9 +152,6 @@ namespace AlexaDo
                         processedCacheUpdated = true;
                     }
 
-                    //// Have to use WebClient to get JSON data, WebBrowser control tries to download it to a file
-                    //// prompting UI for a file name - may be able to intercept this using ActiveX API, but the
-                    //// following seems to work OK and allows operation on another thread:
                     //using (WebClient client = new WebClient())
                     //{
                     //    const string url = Settings.BaseURL + Settings.ActivitiesAPI + Settings.QueryTopFiveActivities;
@@ -390,12 +387,12 @@ namespace AlexaDo
         private string Navigate(string url)
         {
             m_navigationComplete = false;
-            m_echoMonitor.BrowserControl.Navigate(url, null, null, "User-Agent: " + Settings.UserAgent);
+            m_echoMonitor.ActivityBrowser.Navigate(url, null, null, "User-Agent: " + Settings.UserAgent);
 
             while (!m_navigationComplete && !m_applicationClosing)
                 Application.DoEvents();
 
-            return m_echoMonitor.BrowserControl.DocumentText;
+            return m_echoMonitor.Invoke(new Func<string>(() => m_echoMonitor.ActivityBrowser.DocumentText)) as string;
         }
 
         private void m_echoMonitor_FormClosing(object sender, FormClosingEventArgs e)

@@ -163,7 +163,7 @@
     <!-- GSF Dependencies -->
     <ComponentGroup Id="GSFDependencyComponents" Directory="INSTALLFOLDER">
       <Component Id="GSF.Core">
-        <File Id="GSF.Core.dll" Name="GSF.Core.dll" Source="$(var.SolutionDir)\packages\GSF.Core.2.1.391-beta\lib\net46\GSF.Core.dll" />
+        <File Id="GSF.Core.dll" Name="GSF.Core.dll" Source="$(var.SolutionDir)\packages\GSF.Core.2.1.393-beta\lib\net46\GSF.Core.dll" />
       </Component>
     </ComponentGroup>
   </Fragment>

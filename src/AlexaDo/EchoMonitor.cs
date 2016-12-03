@@ -108,11 +108,23 @@ namespace AlexaDo
 
         private void BrowserControl_Navigating(object sender, WebBrowserNavigatingEventArgs e)
         {
+            if (InvokeRequired)
+            {
+                BeginInvoke(new Action<object, WebBrowserNavigatingEventArgs>(BrowserControl_Navigating), sender, e);
+                return;    
+            }
+
             URLFeedbackLabel.Text = $"Navigating to {e.Url}...";
         }
 
         private void BrowserControl_ProgressChanged(object sender, WebBrowserProgressChangedEventArgs e)
         {
+            if (InvokeRequired)
+            {
+                BeginInvoke(new Action<object, WebBrowserProgressChangedEventArgs>(BrowserControl_ProgressChanged), sender, e);
+                return;
+            }
+
             if (e.CurrentProgress < 0)
                 return;
 
@@ -122,6 +134,12 @@ namespace AlexaDo
 
         private void BrowserControl_DocumentCompleted(object sender, WebBrowserDocumentCompletedEventArgs e)
         {
+            if (InvokeRequired)
+            {
+                BeginInvoke(new Action<object, WebBrowserDocumentCompletedEventArgs>(BrowserControl_DocumentCompleted), sender, e);
+                return;
+            }
+
             URLFeedbackLabel.Text = $"Loaded {e.Url}.";
         }
 
@@ -277,9 +295,12 @@ namespace AlexaDo
 
             try
             {
+                // TODO: Only reauth after multiple failures
+                m_activityProcessor.ProcessActivities();
+
                 // If did not process activities, retry authentication
-                if (!m_activityProcessor.ProcessActivities())
-                    Reauthenticate(false);
+                //if (!m_activityProcessor.ProcessActivities())
+                //    Reauthenticate(false);
 
                 BeginInvoke((Action)UpdateTaskbarTooltip);
             }

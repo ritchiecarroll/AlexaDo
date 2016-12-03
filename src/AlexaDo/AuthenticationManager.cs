@@ -69,16 +69,16 @@ namespace AlexaDo
             // Create a new script interface to detect new Echo activities
             ScriptInterface scriptInterface = new ScriptInterface();
             scriptInterface.ReceivedEchoActivity += scriptInterface_ReceivedEchoActivity;
-            m_echoMonitor.BrowserControl.ObjectForScripting = scriptInterface;
+            m_echoMonitor.AuthenticationBrowser.ObjectForScripting = scriptInterface;
 
             // Attach to needed events
             m_echoMonitor.FormClosing += m_echoMonitor_FormClosing;
-            m_echoMonitor.BrowserControl.DocumentCompleted += BrowserControl_DocumentCompleted;
+            m_echoMonitor.AuthenticationBrowser.DocumentCompleted += BrowserControl_DocumentCompleted;
 
             try
             {
                 // Reference underlying IE based ActiveX control so we can attach to native events
-                m_activeXReference = (SHDocVw.WebBrowser)m_echoMonitor.BrowserControl.ActiveXInstance;
+                m_activeXReference = (SHDocVw.WebBrowser)m_echoMonitor.AuthenticationBrowser.ActiveXInstance;
 
                 // BrowserControl_BeforeNavigate2 event provides headers and post data
                 m_activeXReference.BeforeNavigate2 += BrowserControl_BeforeNavigate2;
@@ -117,7 +117,7 @@ namespace AlexaDo
                     {
                         // Detach from form events
                         m_echoMonitor.FormClosing -= m_echoMonitor_FormClosing;
-                        m_echoMonitor.BrowserControl.DocumentCompleted -= BrowserControl_DocumentCompleted;
+                        m_echoMonitor.AuthenticationBrowser.DocumentCompleted -= BrowserControl_DocumentCompleted;
 
                         // Dereference ActiveX control
                         if ((object)m_activeXReference != null)
@@ -142,7 +142,7 @@ namespace AlexaDo
         public void Navigate(string url, bool scrollToBottom = false)
         {
             m_navigationComplete = false;
-            m_echoMonitor.BrowserControl.Navigate(url, null, null, "User-Agent: " + Settings.UserAgent);
+            m_echoMonitor.AuthenticationBrowser.Navigate(url, null, null, "User-Agent: " + Settings.UserAgent);
 
             while (!m_navigationComplete && !m_applicationClosing)
                 Application.DoEvents();
@@ -151,7 +151,7 @@ namespace AlexaDo
                 return;
 
             // Scroll browser window to bring login screen into full view
-            HtmlDocument doc = m_echoMonitor.BrowserControl.Document;
+            HtmlDocument doc = m_echoMonitor.AuthenticationBrowser.Document;
 
             if ((object)doc != null && (object)doc.Window != null && (object)doc.Body != null)
                 doc.Window.ScrollTo(0, doc.Body.ScrollRectangle.Height);
@@ -179,7 +179,7 @@ namespace AlexaDo
                 // the web page to get user to authenticate, then cache the credentials for future loads.
                 Navigate(Settings.BaseURL, true);
 
-                HtmlDocument doc = m_echoMonitor.BrowserControl.Document;
+                HtmlDocument doc = m_echoMonitor.AuthenticationBrowser.Document;
 
                 if ((object)doc == null)
                     return;
@@ -311,80 +311,79 @@ namespace AlexaDo
         // Establish Echo activity monitoring - try web socket attachment, if this fails, fall back on timer query
         private void EstablishEchoActivityMonitor()
         {
-            m_echoMonitor.QueryTimer.Enabled = true;
-            ShowNotification("Using timer based query for activity polling...", ToolTipIcon.Info);
+            // Attempt to piggy-back Amazon Websockets for dynamic response - we do this by updating the current page with script to
+            // attach to the running Echo communications stack, see: http://www.piettes.com/echo/viewtopic.php?f=3&t=10
+            const string activityMonitorScript =
+                "    function startMonitor() {" +
+                "        $('body').css('display', 'none');\r\n" +
+                "        $('html').append('<div style=\"position: fixed; top:2%; left: 3%; transform: translate(-2%, -3%);\"><h2>Monitoring Echo Activity...</h2></div>');\r\n" +
+                "        $('html').append('<div id=\"echochamber\" style=\"position: fixed; top:50%; left: 50%; transform: translate(-50%, -50%);\"><h1 class=\"command\">Waiting for you to interact with Alexa...</h1><br /><div class=\"output\" style=\"max-width: 50%; font-size: 10px; font-family: monospace\" /><br /><h3 class=\"displayTime\"></h3></div>');\r\n" +
+                "        $('html').append('<div id=\"echochamber_note\" style=\"position: fixed; bottom:50px; left: 50%; transform: translate(-50%, 90%);\"><em>Commands you say that trigger a card to be created will show up here... Try \"tell me a joke\".</em></div>');\r\n" +
+                "        $('html').css('background-color', 'white');\r\n" +
+                "        return true;\r\n" +
+                "    }\r\n\r\n" +
+                "    // On card create notification, fetch card details and display\r\n" +
+                "    function onNewCardActivity(card) {\r\n" +
+                "        // Resets\r\n" +
+                "        $('html').css('background-color', 'yellow');\r\n" +
+                "        setTimeout(function() { $('html').css('background-color', 'white'); }, 5000);\r\n" +
+                "        $('#echochamber h1, #echochamber .output').text(\"\");\r\n\r\n" +
+                "        var key = card.key.registeredUserId + \"#\" + card.key.entryId;\r\n" +
+                "        var url = '" + Settings.BaseURL + Settings.ActivitiesAPI + "/'+ encodeURIComponent(key);\r\n" +
+                "        $.get(url, function(data){\r\n" +
+                "            if (data.activity) {\r\n" +
+                "                // Trigger .NET call-back\r\n" +
+                "                window.external.EchoActivityCallback();\r\n\r\n" +
+                "                // Parse JSON response for display\r\n" +
+                "                var command;\r\n" +
+                "                if (data.activity.description) {\r\n" +
+                "                    command = JSON.parse(data.activity.description).summary;\r\n" +
+                "                }\r\n" +
+                "                // Show output\r\n" +
+                "                $('#echochamber h1').text(command);\r\n" +
+                "                $('#echochamber .output').text(JSON.stringify(data.activity, undefined, 2));\r\n" +
+                "                $('#echochamber h3').text(\"Last command received at \" + Date());\r\n" +
+                "            }\r\n" +
+                "            $('html').css('background-color', 'green');\r\n" +
+                "        });\r\n" +
+                "    }\r\n\r\n" +
+                "    // Attach to the card creation listener\r\n" +
+                "    setTimeout(function() {" +
+                "        var cardStream = require(\"collections/cardstream/card-collection\").getInstance();\r\n" +
+                "        cardStream.listenTo(cardStream, \"pushMessage\", onNewCardActivity);\r\n" +
+                "        $('#echochamber .output').text('Established card creation listener...');\r\n" +
+                "    }, 1000);";
 
-            //// Attempt to piggy-back Amazon Websockets for dynamic response - we do this by updating the current page with script to
-            //// attach to the running Echo communications stack, see: http://www.piettes.com/echo/viewtopic.php?f=3&t=10
-            //const string activityMonitorScript =
-            //    "function startMonitor() {" +
-            //    "   $('body').css('display', 'none');\r\n" +
-            //    "   $('html').append('<div style=\"position: fixed; top:2%; left: 3%; transform: translate(-2%, -3%);\"><h2>Monitoring Echo Activity...</h2></div>');\r\n" +
-            //    "   $('html').append('<div id=\"echochamber\" style=\"position: fixed; top:50%; left: 50%; transform: translate(-50%, -50%);\"><h1 class=\"command\">Waiting for you to interact with Alexa...</h1><br /><div class=\"output\" style=\"max-width: 50%; font-size: 10px; font-family: monospace\" /><br /><h3 class=\"displayTime\"></h3></div>');\r\n" +
-            //    "   $('html').append('<div id=\"echochamber_note\" style=\"position: fixed; bottom:50px; left: 50%; transform: translate(-50%, 90%);\"><em>Commands you say that trigger a card to be created will show up here... Try \"tell me a joke\".</em></div>');\r\n" +
-            //    "   $('html').css('background-color', 'white');\r\n" +
-            //    "   // On card create notification, fetch card details and display\r\n" +
-            //    "   var onPushActivity = function(c) {\r\n" +
-            //    "       // Resets\r\n" +
-            //    "       $('html').css('background-color', 'red');\r\n" +
-            //    "       setTimeout(function() { $('html').css('background-color', 'white'); }, 5000);\r\n" +
-            //    "       $('#echochamber h1, #echochamber .output').text(\"\");\r\n\r\n" +
-            //    "       var b = c.key.registeredUserId + \"#\" + c.key.entryId;\r\n" +
-            //    "       var url = '" + Settings.BaseURL + Settings.ActivitiesAPI + "/'+ encodeURIComponent(b);\r\n" +
-            //    "       $.get(url, function(data){\r\n" +
-            //    "           if (data.activity) {\r\n" +
-            //    "               // Trigger .NET call-back\r\n" +
-            //    "               window.external.EchoActivityCallback();\r\n\r\n" +
-            //    "               // Parse JSON response for display\r\n" +
-            //    "               var command;\r\n" +
-            //    "               if (data.activity.description) {\r\n" +
-            //    "                   command = JSON.parse(data.activity.description).summary;\r\n" +
-            //    "               }\r\n" +
-            //    "               // Show output\r\n" +
-            //    "               $('#echochamber h1').text(command);\r\n" +
-            //    "               $('#echochamber .output').text(JSON.stringify(data.activity, undefined, 2));\r\n" +
-            //    "               $('#echochamber h3').text(\"Last command received at \" + Date());\r\n" +
-            //    "           }\r\n" +
-            //    "           $('html').css('background-color', 'green');\r\n" +
-            //    "       });\r\n" +
-            //    "   };\r\n\r\n" +
-            //    "   // Attach to the card creation listener\r\n" +
-            //    "   var e = require(\"collections/cardstream/card-collection\").getInstance();\r\n" +
-            //    "   e.listenTo(e, \"pushMessage\", function(c){\r\n" +
-            //    "       onPushActivity(c);\r\n" +
-            //    "   });\r\n" +
-            //    "   return true;\r\n" +
-            //    "}";
+            HtmlDocument doc = m_echoMonitor.AuthenticationBrowser.Document;
+            object response = null;
 
-            //HtmlDocument doc = m_echoMonitor.BrowserControl.Document;
-            //object response = null;
+            // TODO: What to do if user navigates away from this page? Monitor for page change and switch to poll (maybe with a warning) or lock out browser control?
+            // TODO: Maybe want to still use timer to query process activities, although on a longer interval, to make sure user session doesn't expire
+            if ((object)doc != null && (object)doc.Body != null)
+            {
+                HtmlElement body = doc.GetElementsByTagName("body")[0];
+                HtmlElement script = doc.CreateElement("script");
 
-            //// TODO: What to do if user navigates away from this page? Monitor for page change and switch to poll (maybe with a warning) or lock out browser control?
-            //// TODO: Maybe want to still use timer to query process activities, although on a longer interval, to make sure user session doesn't expire
-            //if ((object)doc != null && (object)doc.Body != null)
-            //{
-            //    HtmlElement head = doc.GetElementsByTagName("head")[0];
-            //    HtmlElement script = doc.CreateElement("script");
+                if ((object)script != null)
+                {
+                    script.SetAttribute("text", activityMonitorScript);
+                    body.AppendChild(script);
+                    response = doc.InvokeScript("startMonitor");
+                }
+            }
 
-            //    if ((object)script != null)
-            //    {
-            //        script.SetAttribute("text", activityMonitorScript);
-            //        head.AppendChild(script);
-            //        response = doc.InvokeScript("startMonitor");
-            //    }
-            //}
-
-            //// If dynamic monitoring is not available, start activity query on a timer
-            //if (response.ToNonNullNorEmptyString("false").ParseBoolean())
-            //{
-            //    Log.Debug("Successfully established Websocket monitor for Echo activities.");
-            //}
-            //else
-            //{
-            //    Log.Debug("Failed to establish Websocket monitor for Echo activities.");
-            //    m_echoMonitor.QueryTimer.Enabled = true;
-            //    ShowNotification("Using timer based query for activity polling, web socket is unavailable...", ToolTipIcon.Warning);
-            //}
+            // If dynamic monitoring is not available, start activity query on a timer
+            if (response.ToNonNullNorEmptyString("false").ParseBoolean())
+            {
+                Log.Debug("Successfully established Websocket monitor for Echo activities.");
+            }
+            else
+            {
+                Log.Debug("Failed to establish Websocket monitor for Echo activities.");
+                m_echoMonitor.QueryTimer.Interval = Settings.QueryInterval;
+                m_echoMonitor.QueryTimer.Enabled = true;
+                ShowNotification("Using timer based query for activity polling, web socket is unavailable...", ToolTipIcon.Warning);
+            }
         }
 
         private void AutomatedLogin(HtmlDocument doc, string userName, string password)
